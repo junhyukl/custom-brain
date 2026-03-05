@@ -19,14 +19,17 @@
     "test:cov": "jest --coverage",
     "test:debug": "node --inspect-brk -r tsconfig-paths/register -r ts-node/register pnpm exec jest --runInBand",
     "test:e2e": "jest --config ./test/jest-e2e.json",
-    "ingest-photos": "ts-node -r tsconfig-paths/register scripts/ingest-photos.ts"
+    "ingest-photos": "ts-node -r tsconfig-paths/register scripts/ingest-photos.ts",
+    "build-face-db": "ts-node -r tsconfig-paths/register scripts/build-face-db.ts"
   },
   "dependencies": {
     "@nestjs/common": "^11.0.1",
     "@nestjs/core": "^11.0.1",
     "@nestjs/platform-express": "^11.0.1",
     "@qdrant/js-client-rest": "^1.17.0",
+    "@vladmandic/face-api": "^1.7.15",
     "axios": "^1.13.6",
+    "canvas": "^3.0.3",
     "mongodb": "^6.12.0",
     "reflect-metadata": "^0.2.2",
     "rxjs": "^7.8.1"

@@ -1,42 +1,48 @@
 /**
- * Photo Ingestion: 폴더 스캔 → Vision 설명 → embedding → Qdrant + Memory 저장
+ * Photo + Face Ingestion: personal & family 폴더 스캔
+ * → 얼굴 인식 & 태깅 → Vision 설명 → embedding → Qdrant + Memory
  *
  * 사용법:
  *   pnpm run ingest-photos
- *   PHOTO_DIR=./brain-data/family/photos pnpm run ingest-photos
  *
- * 폴더 구조 예:
- *   brain-data/family/photos/
- *     2015_korea_trip/IMG_001.jpg
- *     grandfather/birthday2019.jpg
+ * 폴더 구조:
+ *   brain-data/personal/photos/  (projects/, notes/, work1.jpg ...)
+ *   brain-data/family/photos/    (2015_korea_trip/, grandfather/, birthday2019.jpg)
  */
 import fs from 'fs';
 import path from 'path';
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from '../src/app.module';
-import { ImageDescribeService } from '../src/vision/image.describe';
-import { MemoryService } from '../src/brain-core/memory.service';
+import { PhotoProcessService } from '../src/ingestion/photo.process';
 import { STORAGE_CONFIG } from '../src/config/storage.config';
 
-const PHOTO_DIR = process.env.PHOTO_DIR ?? path.join(STORAGE_CONFIG.root, 'family', 'photos');
-const PHOTO_EXT = ['.jpg', '.jpeg', '.png', '.webp'];
+const PHOTO_EXT = /\.(jpg|jpeg|png|webp)$/i;
 
-async function ingestFolder(
+const PHOTO_DIRS: { dir: string; scope: 'personal' | 'family' }[] = [
+  { dir: STORAGE_CONFIG.personal.photos, scope: 'personal' },
+  { dir: STORAGE_CONFIG.family.photos, scope: 'family' },
+];
+
+async function scanFolder(
   folder: string,
-  describe: ImageDescribeService,
-  memory: MemoryService,
+  processPhoto: PhotoProcessService,
+  scope: 'personal' | 'family',
 ): Promise<{ done: number; skip: number; err: number }> {
   let done = 0;
   let skip = 0;
   let err = 0;
+
+  if (!fs.existsSync(folder)) {
+    return { done: 0, skip: 0, err: 0 };
+  }
+
   const entries = fs.readdirSync(folder, { withFileTypes: true });
 
   for (const e of entries) {
-    const filePath = path.join(folder, e.name);
-    const relPath = path.relative(PHOTO_DIR, filePath);
+    const fullPath = path.join(folder, e.name);
 
     if (e.isDirectory() && !e.name.startsWith('.')) {
-      const sub = await ingestFolder(filePath, describe, memory);
+      const sub = await scanFolder(fullPath, processPhoto, scope);
       done += sub.done;
       skip += sub.skip;
       err += sub.err;
@@ -48,23 +54,20 @@ async function ingestFolder(
       continue;
     }
 
-    const ext = path.extname(e.name).toLowerCase();
-    if (!PHOTO_EXT.includes(ext)) {
+    if (!PHOTO_EXT.test(e.name)) {
       skip += 1;
       continue;
     }
 
     try {
-      console.log('processing', relPath);
-      const description = await describe.describeFromPath(filePath, true);
-      await memory.store(description, {
-        type: 'photo',
-        scope: 'family',
-        metadata: { filePath: relPath },
-      });
+      console.log('processing', fullPath);
+      const result = await processPhoto.processPhoto(fullPath, scope);
+      console.log(
+        `  -> ${result.memoryId} (${result.faces.length} faces: ${result.faces.map((f) => f.name).join(', ')})`,
+      );
       done += 1;
     } catch (e) {
-      console.error('error', relPath, e);
+      console.error('error', fullPath, e);
       err += 1;
     }
   }
@@ -73,23 +76,26 @@ async function ingestFolder(
 }
 
 async function main() {
-  const absDir = path.isAbsolute(PHOTO_DIR) ? PHOTO_DIR : path.join(process.cwd(), PHOTO_DIR);
-  if (!fs.existsSync(absDir)) {
-    console.error('Photo dir not found:', absDir);
-    process.exit(1);
-  }
-
   const app = await NestFactory.createApplicationContext(AppModule, {
     logger: ['error', 'warn'],
   });
-  const describe = app.get(ImageDescribeService);
-  const memory = app.get(MemoryService);
+  const processPhoto = app.get(PhotoProcessService);
 
-  console.log('Photo dir:', absDir);
-  const { done, skip, err } = await ingestFolder(absDir, describe, memory);
+  let totalDone = 0;
+  let totalSkip = 0;
+  let totalErr = 0;
+
+  for (const { dir, scope } of PHOTO_DIRS) {
+    const absDir = path.isAbsolute(dir) ? dir : path.join(process.cwd(), dir);
+    console.log(`\n[${scope}] ${absDir}`);
+    const { done, skip, err } = await scanFolder(absDir, processPhoto, scope);
+    totalDone += done;
+    totalSkip += skip;
+    totalErr += err;
+  }
+
   await app.close();
-
-  console.log('Done.', { done, skip, err });
+  console.log('\nDone.', { done: totalDone, skip: totalSkip, err: totalErr });
 }
 
 main().catch((e) => {

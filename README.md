@@ -158,47 +158,69 @@ curl "http://localhost:3001/brain/timeline?limit=20"
 
 ---
 
-### 4. 가족 사진 대량 수집
+### 4. Photo + Face Ingestion (사진 10만 장 + 얼굴 인식 + 가족 태깅)
 
-수천~수만 장의 사진을 **폴더 스캔 → Vision 설명 → 임베딩 → Qdrant + Memory** 로 자동 수집합니다.
+수천~수만 장을 **폴더 스캔 → 얼굴 인식 & 태깅 → Vision 설명 → 임베딩 → Qdrant + Memory** 로 자동 구축합니다.
 
 #### 4-1. 폴더 구조
 
-사진을 아래처럼 두면 됩니다.
-
 ```
 brain-data/
+  personal/
+    photos/           # 개인 사진 (프로젝트, 메모 등)
+      projects/
+      notes/
+        work1.jpg
+        work2.png
   family/
-    photos/
+    photos/            # 가족 사진
       2015_korea_trip/
         IMG_001.jpg
         IMG_002.jpg
       grandfather/
         birthday2019.jpg
+    faces_src/         # 얼굴 DB 구축용: 인물당 사진 1장
+        Grandfather_01.jpg   → 이름: Grandfather
+        Mother_02.png       → 이름: Mother
+    faces.json         # (생성됨) pnpm run build-face-db 실행 후
 ```
 
-- `brain-data/family/photos/` 아래에 **폴더 단위**로 정리 (예: 연도_여행명, 인물명 등).
+- **personal/photos**, **family/photos** 둘 다 스캔됩니다.
 - 지원 확장자: `.jpg`, `.jpeg`, `.png`, `.webp`.
 
-#### 4-2. 수집 스크립트 실행
+#### 4-2. 얼굴 DB 구축 (처음 한 번만)
 
-**서버를 띄울 필요 없이** 스크립트만 실행하면 됩니다. (Ollama, Qdrant, MongoDB는 실행 중이어야 함.)
+가족 얼굴 태깅을 쓰려면 **faces_src/** 에 인물당 사진 1장을 넣고 DB를 만듭니다.
 
 ```bash
-# 기본 경로: brain-data/family/photos
-pnpm run ingest-photos
+# 1) face-api 모델 다운로드 (프로젝트 루트에 face-models/ 생성)
+#    https://github.com/vladmandic/face-api-models 에서
+#    ssd_mobilenetv1_model-weights_manifest.json, face_landmark_68_model-*, face_recognition_model-*
+#    등을 face-models/ 폴더에 넣거나, FACE_MODEL_PATH 환경 변수로 경로 지정.
 
-# 다른 폴더 지정 (Windows PowerShell)
-$env:PHOTO_DIR="C:\Photos\가족사진"; pnpm run ingest-photos
+# 2) brain-data/family/faces_src/ 에 인물별 사진 추가 (파일명: 이름_번호.jpg)
 
-# 다른 폴더 지정 (Bash)
-PHOTO_DIR=./my-photos pnpm run ingest-photos
+# 3) 얼굴 DB 생성 → brain-data/family/faces.json
+pnpm run build-face-db
 ```
 
-- 각 이미지마다 **Vision(llava)** 으로 설명 생성 → **embedding** 생성 → **Qdrant + Mongo** 에 저장.
-- 콘솔에 `processing <경로>`, 마지막에 `Done. { done, skip, err }` 가 출력됩니다.
+face-api 모델 파일은 [vladmandic/face-api-models](https://github.com/vladmandic/face-api-models) 또는 [face-api.js weights](https://github.com/justadudewhohacks/face-api.js/tree/master/weights) 에서 내려받아 `face-models/` 에 넣으면 됩니다.
 
-#### 4-3. 사진 한 장만 API로 분석
+이후 `ingest-photos` 실행 시 사진 속 얼굴이 **faces.json** 과 매칭되어 `metadata.people` 에 이름이 들어갑니다.
+
+#### 4-3. 수집 스크립트 실행
+
+Ollama, Qdrant, MongoDB만 켜두고 스크립트만 실행하면 됩니다.
+
+```bash
+# personal/photos + family/photos 모두 스캔 (얼굴 인식 → Vision → embedding → Qdrant + Memory)
+pnpm run ingest-photos
+```
+
+- 각 이미지: **얼굴 인식** (faces.json 있으면) → **Vision(llava)** 설명 → **embedding** → **Qdrant + Mongo** 저장.
+- 콘솔에 `processing <경로>`, `(N faces: 이름1, 이름2)` 및 `Done. { done, skip, err }` 가 출력됩니다.
+
+#### 4-4. 사진 한 장만 API로 분석
 
 이미지(base64) 한 장을 보내서 설명 생성 + 메모리 저장:
 
@@ -240,7 +262,8 @@ curl http://localhost:3001/brain/family/tree
 |------|------|
 | `pnpm run start:dev` | 개발 서버 (watch) |
 | `pnpm run start:prod` | 프로덕션 서버 |
-| `pnpm run ingest-photos` | 가족 사진 폴더 스캔 → AI 메모리 수집 |
+| `pnpm run ingest-photos` | personal + family 사진 스캔 → 얼굴 태깅 → Vision → AI 메모리 수집 |
+| `pnpm run build-face-db` | faces_src/ → faces.json (가족 얼굴 DB 구축) |
 | `pnpm run build` | 빌드 |
 | `pnpm run test` | 단위 테스트 |
 
@@ -256,8 +279,9 @@ curl http://localhost:3001/brain/family/tree
 | `MONGO_URL` | `mongodb://localhost:27017` | MongoDB 연결 문자열 |
 | `MONGO_DB_NAME` | `custom_brain` | MongoDB DB 이름 |
 | `BRAIN_DATA_PATH` | `./brain-data` | brain-data 루트 경로 |
-| `PHOTO_DIR` | `brain-data/family/photos` | 사진 수집 스크립트 기본 폴더 |
+| `PHOTO_DIR` | (사용 안 함, personal/family 고정) | - |
 | `VISION_MODEL` | `llava` | 사진 설명용 Vision 모델 |
+| `FACE_MODEL_PATH` | `./face-models` | face-api 모델 파일 폴더 (얼굴 인식용) |
 
 `.env` 파일을 만들어 두면 위 값들을 덮어쓸 수 있습니다.
 
@@ -306,12 +330,14 @@ curl -X POST http://localhost:3001/brain/ask \
 ```
 custom-brain/
 ├── brain-data/            # 실제 기억 데이터 (personal / family)
-│   ├── personal/notes, documents, projects
-│   └── family/photos, history, documents
+│   ├── personal/notes, documents, projects, photos
+│   └── family/photos, faces_src, faces.json
 ├── docker/
 │   └── docker-compose.yml # Qdrant + Mongo
+├── face-models/           # face-api 모델 파일 (얼굴 인식용, 수동 다운로드)
 ├── scripts/
-│   ├── ingest-photos.ts   # 가족 사진 폴더 스캔 → Vision·임베딩·Qdrant·Memory (대량 수집)
+│   ├── ingest-photos.ts   # personal + family 사진 스캔 → 얼굴·Vision·임베딩·Qdrant·Memory
+│   ├── build-face-db.ts   # faces_src/ → faces.json (가족 얼굴 DB)
 │   ├── ingest-folder.ts   # 폴더 스캔 후 API로 수집
 │   └── rebuild-vector.ts  # 벡터 인덱스 재구성
 └── src/
@@ -330,11 +356,11 @@ custom-brain/
     ├── brain-schema/      # Memory, Person, Event, PhotoMemory 스키마
     ├── brain/             # 채팅·RAG·가족·자동 메모리 평가
     ├── config/            # qdrant, ollama, storage 설정
-    ├── ingestion/         # photo, document, email 수집
+    ├── ingestion/         # photo.ingest, photo.process(얼굴+Vision+저장), document, email
     ├── llm/               # Ollama 클라이언트, PromptService
     ├── storage/           # file.service, path.service (brain-data 경로)
     ├── vector/            # Qdrant 클라이언트, VectorService
-    ├── vision/            # ImageDescribeService, OcrService
+    ├── vision/            # ImageDescribeService, face.recognition(얼굴 인식), OcrService
     ├── mongo/             # MongoDB 연결
     └── tools/             # 툴 구현 (agent-tools에서 re-export)
 ```
@@ -365,7 +391,8 @@ custom-brain/
 | `pnpm run start` | 일반 시작 |
 | `pnpm run start:dev` | watch 모드 |
 | `pnpm run start:prod` | dist 기반 프로덕션 |
-| `pnpm run ingest-photos` | 가족 사진 폴더 스캔 → Vision·임베딩·Qdrant·Memory 저장 |
+| `pnpm run ingest-photos` | personal + family 사진 스캔 → 얼굴 태깅 → Vision·임베딩·Qdrant·Memory |
+| `pnpm run build-face-db` | faces_src/ → faces.json (가족 얼굴 DB) |
 | `pnpm run lint` | ESLint |
 | `pnpm run format` | Prettier |
 | `pnpm run test` | 단위 테스트 (Jest) |
