@@ -1,0 +1,3 @@
+# Add one photo per family member.
+# Filename format: Name_number.jpg (e.g. Grandfather_01.jpg, Mother_02.png)
+# Then run: pnpm run build-face-db
