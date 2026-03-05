@@ -38,4 +38,14 @@ export class VectorStore {
       payload: r.payload as Record<string, unknown> | undefined,
     }));
   }
+
+  /** 컬렉션이 없으면 생성 (이미 있으면 무시) */
+  async ensureCollection(collection: string, vectorSize: number): Promise<void> {
+    const exists = await this.client.collectionExists(collection);
+    if (!exists) {
+      await this.client.createCollection(collection, {
+        vectors: { size: vectorSize, distance: 'Cosine' },
+      });
+    }
+  }
 }

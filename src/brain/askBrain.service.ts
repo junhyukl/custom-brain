@@ -3,6 +3,7 @@ import { MemoryService } from './memory.service';
 import { LlmClient } from '../llm/llmClient';
 import { MemoryEvaluatorService } from './memoryEvaluator.service';
 import { DEFAULT_LLM_MODEL } from '../common/constants';
+import { buildContextQuestionPrompt } from '../common/promptHelpers';
 
 /**
  * askBrain(question):
@@ -21,20 +22,10 @@ export class AskBrainService {
 
   async askBrain(question: string): Promise<string> {
     const context = await this.memory.search(question);
-
-    const prompt = `
-Context:
-${JSON.stringify(context)}
-
-Question:
-${question}
-`;
-
+    const prompt = buildContextQuestionPrompt(context, question);
     const answer = await this.llm.generate(DEFAULT_LLM_MODEL, prompt);
-
     await this.memoryEvaluator.evaluateAndMaybeStore(question);
     await this.memoryEvaluator.evaluateAndMaybeStore(answer);
-
     return answer;
   }
 }
