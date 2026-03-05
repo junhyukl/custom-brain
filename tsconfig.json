@@ -1,4 +1,6 @@
 {
+  "include": ["src", "scripts", "test"],
+  "exclude": ["node_modules", "dist", "frontend"],
   "compilerOptions": {
     "module": "commonjs",
     "moduleResolution": "node",

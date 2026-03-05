@@ -24,7 +24,9 @@
     "ingest-all-parallel": "ts-node -r tsconfig-paths/register scripts/ingest-all-parallel.ts",
     "build-face-db": "ts-node -r tsconfig-paths/register scripts/build-face-db.ts",
     "build-timeline": "ts-node -r tsconfig-paths/register scripts/build-timeline.ts",
-    "run-agent": "ts-node -r tsconfig-paths/register scripts/run-agent.ts"
+    "run-agent": "ts-node -r tsconfig-paths/register scripts/run-agent.ts",
+    "dev:ui": "pnpm -C frontend dev",
+    "build:ui": "pnpm -C frontend build"
   },
   "dependencies": {
     "@nestjs/common": "^11.0.1",

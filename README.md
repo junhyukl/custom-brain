@@ -169,6 +169,25 @@ pnpm run run-agent
 - 스크립트가 예시 질문 3개(가족 여행 사진, 할아버지 사진, Tesla 문서)에 대해 **searchMemory / searchPhotos / searchDocuments / timeline / familyTree** 로 context를 모은 뒤 Ollama에 전달해 답변을 출력합니다.
 - OpenClaw 등 에이전트에서는 `docs/openclaw/custom-brain/SKILL.md` 의 Agent Tools 테이블을 참고해 동일한 엔드포인트를 도구로 등록하면 됩니다.
 
+#### 3-3. 웹/모바일 UI (실시간 검색)
+
+사진·문서·메모리를 **웹에서 바로 검색**할 수 있는 React UI가 포함되어 있습니다.
+
+```bash
+# 1) 백엔드 실행 (다른 터미널)
+pnpm run start:dev
+
+# 2) 프론트엔드 실행
+pnpm install   # 최초 1회, 루트에서
+pnpm -C frontend install
+pnpm run dev:ui
+```
+
+- 브라우저에서 **http://localhost:5173** 접속.
+- 검색창에 "2015년 가족 여행", "Tesla 문서" 등 입력 후 **사진 / 문서 / 메모리** 탭으로 검색.
+- 사진은 썸네일로 표시되고, 문서는 파일명·텍스트 요약으로 표시됩니다. 이미지는 백엔드가 `/brain-data` 로 서빙하므로 `brain-data/` 폴더 내 경로가 그대로 URL이 됩니다.
+- 모바일 앱(React Native)에서도 동일한 `/brain/photos/search`, `/brain/documents/search`, `/brain/memory/search` 엔드포인트를 호출하면 됩니다.
+
 ---
 
 ### 4. Photo + Face Ingestion (사진 10만 장 + 얼굴 인식 + 가족 태깅)
@@ -311,6 +330,8 @@ curl http://localhost:3001/brain/family/tree
 | `pnpm run build-face-db` | faces_src/ → faces.json (가족 얼굴 DB 구축) |
 | `pnpm run build-timeline` | 메모리 연도별 타임라인 통계 출력 |
 | `pnpm run run-agent` | Agent 예제 (질문 → 검색 툴 → Ollama → 답변) |
+| `pnpm run dev:ui` | 웹 UI 개발 서버 (http://localhost:5173) |
+| `pnpm run build:ui` | 웹 UI 프로덕션 빌드 |
 | `pnpm run build` | 빌드 |
 | `pnpm run test` | 단위 테스트 |
 
