@@ -3,11 +3,67 @@
   const questionEl = document.getElementById("question");
   const answerEl = document.getElementById("answer");
   const resultsEl = document.getElementById("results");
+  const resultsHeader = document.getElementById("resultsHeader");
+  const loadSamplesBtn = document.getElementById("loadSamplesBtn");
+  const loadStatus = document.getElementById("loadStatus");
+  const suggestionsEl = document.getElementById("suggestions");
+
+  const SUGGESTIONS = [
+    "할아버지 이야기 알려줘",
+    "할머니 여행 사진 보여줘",
+    "엄마 아빠 출생 이야기 알려줘",
+    "1975년 가족 여행 이야기",
+    "가족 문서 요약해줘",
+  ];
 
   function fileUrl(filePath) {
     if (!filePath) return null;
     return "/brain/family/file?path=" + encodeURIComponent(filePath);
   }
+
+  function renderSuggestions() {
+    suggestionsEl.innerHTML = "";
+    SUGGESTIONS.forEach((q) => {
+      const btn = document.createElement("button");
+      btn.type = "button";
+      btn.textContent = q;
+      btn.addEventListener("click", () => {
+        questionEl.value = q;
+        questionEl.focus();
+      });
+      suggestionsEl.appendChild(btn);
+    });
+  }
+
+  loadSamplesBtn.addEventListener("click", async () => {
+    loadStatus.textContent = "로딩 중...";
+    loadStatus.className = "load-status";
+    loadSamplesBtn.disabled = true;
+    try {
+      const res = await fetch("/brain/family/initialize", { method: "POST" });
+      const data = res.ok ? await res.json() : {};
+      if (res.ok) {
+        const msg = [
+          "텍스트 " + (data.textsLoaded || 0) + "건",
+          "사진 " + (data.imagesAdded || 0) + "건",
+          "문서 " + (data.documentsAdded || 0) + "건",
+        ].join(", ");
+        loadStatus.textContent = "로드 완료: " + msg;
+        loadStatus.className = "load-status success";
+      } else {
+        loadStatus.textContent = "실패: " + (data.message || res.status);
+        loadStatus.className = "load-status error";
+      }
+      if (data.errors && data.errors.length) {
+        loadStatus.textContent += " (일부 오류 있음)";
+      }
+    } catch (err) {
+      loadStatus.textContent = "오류: " + (err.message || "네트워크");
+      loadStatus.className = "load-status error";
+    } finally {
+      loadSamplesBtn.disabled = false;
+    }
+  });
 
   function addResult(item) {
     const file = item.file || (item.metadata && item.metadata.file);
@@ -76,6 +132,7 @@
     answerEl.textContent = "AI가 답변 중...";
     answerEl.className = "answer-section loading";
     resultsEl.innerHTML = "";
+    resultsHeader.style.display = "none";
     askBtn.disabled = true;
 
     try {
@@ -96,7 +153,8 @@
       });
       const searchData = searchRes.ok ? await searchRes.json() : [];
 
-      if (Array.isArray(searchData)) {
+      if (Array.isArray(searchData) && searchData.length > 0) {
+        resultsHeader.style.display = "block";
         searchData.forEach(addResult);
       }
     } catch (err) {
@@ -110,4 +168,6 @@
       askBtn.disabled = false;
     }
   });
+
+  renderSuggestions();
 })();

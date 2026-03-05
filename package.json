@@ -21,7 +21,10 @@
     "test:e2e": "jest --config ./test/jest-e2e.json",
     "family:init": "curl -s -X POST http://localhost:3001/brain/family/initialize",
     "family:query": "node scripts/query-family-brain.js",
-    "sample:download": "node scripts/download-sample-data.js"
+    "sample:download": "node scripts/download-sample-data.js",
+    "sample:seed": "node scripts/create-seed-assets.js",
+    "setup": "node scripts/create-seed-assets.js && node scripts/download-sample-data.js",
+    "openclaw:demo": "node scripts/openclaw-demo.js"
   },
   "dependencies": {
     "@nestjs/common": "^11.0.1",

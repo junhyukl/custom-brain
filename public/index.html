@@ -10,13 +10,20 @@
   <header>
     <h1>Family Brain Agent</h1>
     <p class="subtitle">질문하면 AI가 메모리에서 검색해 답변하고, 관련 사진·문서를 보여줍니다.</p>
+    <div class="setup-bar">
+      <button type="button" id="loadSamplesBtn" class="btn-secondary">샘플 데이터 로드</button>
+      <span id="loadStatus" class="load-status"></span>
+    </div>
   </header>
   <main>
     <section class="ask-section">
       <textarea id="question" placeholder="예: 할머니 여행 사진 보여줘, 할아버지 출생 이야기 알려줘..." rows="3"></textarea>
-      <button id="askBtn" type="button">질문</button>
+      <button id="askBtn" type="button" class="btn-primary">질문</button>
     </section>
+    <p class="hint">추천 질문:</p>
+    <div class="suggestions" id="suggestions"></div>
     <section id="answer" class="answer-section" aria-live="polite"></section>
+    <section class="results-header" id="resultsHeader" style="display: none;">관련 자료</section>
     <section id="results" class="results-section" aria-label="검색 결과"></section>
   </main>
   <script src="main.js"></script>

@@ -43,13 +43,15 @@ GitHub에서 클론 후 아래만 실행하면 바로 동작합니다.
 ```bash
 git clone <repo-url> && cd custom-brain
 pnpm install
-pnpm run sample:download    # (선택) 샘플 이미지 3장 + PDF 2개 다운로드
+# 샘플 파일 준비 (둘 중 하나)
+pnpm run sample:seed        # 네트워크 없이 최소 시드 이미지 3장 + 문서 2개 생성
+# pnpm run sample:download  # 또는 실제 사진/PDF 다운로드
 pnpm run start:dev          # 서버 기동 (기본 포트 3001)
-# 다른 터미널에서:
-pnpm run family:init        # 가족 텍스트 + data 폴더 일괄 로드
-# 브라우저 http://localhost:3001/ → 질문 입력
-# 또는 CLI: pnpm run family:query "할아버지 이야기 알려줘"
 ```
+
+- **브라우저** http://localhost:3001/ → **「샘플 데이터 로드」** 클릭 → 추천 질문으로 테스트
+- **CLI 초기화**: `pnpm run family:init` 후 `pnpm run family:query "할아버지 이야기 알려줘"`
+- **OpenClaw 대화형 테스트**: `node scripts/openclaw-demo.js` ([docs/OPENCLAW_TEST_SCENARIO.md](docs/OPENCLAW_TEST_SCENARIO.md))
 
 (Ollama·Qdrant가 떠 있어야 메모리/질의가 동작합니다. 없으면 서버만 기동됩니다.)
 
@@ -74,7 +76,8 @@ pnpm run sample:download
 다운로드 후 `pnpm run family:init` 으로 메모리에 일괄 등록하면, 브라우저/CLI에서 "할머니 여행 사진", "가족 문서" 등으로 질의할 수 있습니다.  
 (일부 PDF 링크가 환경에 따라 실패할 수 있습니다. 그 경우 표의 링크를 브라우저에서 열어 `data/documents/` 에 저장하거나, 아무 PDF를 넣어도 됩니다.)
 
-리포 전체 구조: [docs/REPO_STRUCTURE.md](docs/REPO_STRUCTURE.md)
+- **자동 로드**: UI에서 **「샘플 데이터 로드」** 버튼으로 `POST /brain/family/initialize` 호출 → 텍스트 + images/documents 폴더가 한 번에 메모리에 올라갑니다.
+- 리포 전체 구조: [docs/REPO_STRUCTURE.md](docs/REPO_STRUCTURE.md)
 
 ## 설치 및 실행
 
@@ -246,13 +249,14 @@ curl -X POST http://localhost:3001/brain/family/initialize
 | 사진 예제 | `data/images/` | 파일명 예: family_trip_1975.jpg, grandma_birthday_1980.jpg, parents_wedding_2000.jpg |
 | 문서 예제 | `data/documents/` | 파일명 예: family_letter_1970.pdf, family_event_1985.pdf |
 
-**실행 순서**
+**실행 순서 (완전 실행 예제)**
 
 1. `pnpm install` → Ollama·Qdrant 실행 (선택: MongoDB는 mongo 쿼리용)
-2. `pnpm run start:dev` → 서버 기동 (기본 3001)
-3. **초기화 한 번**: `curl -X POST http://localhost:3001/brain/family/initialize`
-4. 브라우저 **http://localhost:3001/** → 질문 입력 (예: "할아버지 이야기 알려줘")
-5. **OpenClaw/CLI 테스트**: `node scripts/query-family-brain.js "할머니 여행 사진 보여줘"`
+2. **샘플 파일**: `pnpm run sample:seed` (또는 `pnpm run sample:download`)
+3. `pnpm run start:dev` → 서버 기동 (기본 3001)
+4. **메모리 로드**: 브라우저 http://localhost:3001/ → **「샘플 데이터 로드」** 클릭 (또는 `pnpm run family:init`)
+5. **질문 테스트**: UI 추천 질문 클릭 또는 `pnpm run family:query "할아버지 이야기 알려줘"`
+6. **OpenClaw 대화형 시나리오**: `node scripts/openclaw-demo.js` → 4단계 질문 자동 실행 ([docs/OPENCLAW_TEST_SCENARIO.md](docs/OPENCLAW_TEST_SCENARIO.md))
 
 `scripts/query-family-brain.js`는 OpenClaw Agent처럼 `POST /brain/ask`를 호출해 답변만 출력합니다.  
 환경 변수: `BRAIN_URL=http://localhost:3001` (기본 3001).
