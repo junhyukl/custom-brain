@@ -36,6 +36,46 @@ User / OpenClaw Agent
 - **Ollama** (로컬 LLM, 기본 `mistral:7b-instruct`)
 - **Qdrant** (선택, 벡터 저장소)
 
+## 빠른 실행 (Family Brain 테스트)
+
+GitHub에서 클론 후 아래만 실행하면 바로 동작합니다.
+
+```bash
+git clone <repo-url> && cd custom-brain
+pnpm install
+pnpm run sample:download    # (선택) 샘플 이미지 3장 + PDF 2개 다운로드
+pnpm run start:dev          # 서버 기동 (기본 포트 3001)
+# 다른 터미널에서:
+pnpm run family:init        # 가족 텍스트 + data 폴더 일괄 로드
+# 브라우저 http://localhost:3001/ → 질문 입력
+# 또는 CLI: pnpm run family:query "할아버지 이야기 알려줘"
+```
+
+(Ollama·Qdrant가 떠 있어야 메모리/질의가 동작합니다. 없으면 서버만 기동됩니다.)
+
+OpenClaw Agent 연동 예제: [docs/openclaw-family.md](docs/openclaw-family.md)
+
+### 샘플 이미지/PDF 다운로드 (바로 테스트용)
+
+아래 스크립트로 **샘플 이미지 3장 + PDF 2개**를 `data/images`, `data/documents` 에 받을 수 있습니다.
+
+```bash
+pnpm run sample:download
+```
+
+| 저장 위치 | 파일명 | 다운로드 원본 (직접 받을 때) |
+|-----------|--------|-----------------------------|
+| data/images/ | family_trip_1975.jpg | https://picsum.photos/seed/family-trip-1975/400/300 |
+| data/images/ | grandma_birthday_1980.jpg | https://picsum.photos/seed/grandma-birthday-1980/400/300 |
+| data/images/ | parents_wedding_2000.jpg | https://picsum.photos/seed/parents-wedding-2000/400/300 |
+| data/documents/ | family_letter_1970.pdf | https://www.w3.org/WAI/WCAG21/Techniques/pdf/img/table-word.pdf |
+| data/documents/ | family_event_1985.pdf | https://www.africau.edu/images/default/sample.pdf |
+
+다운로드 후 `pnpm run family:init` 으로 메모리에 일괄 등록하면, 브라우저/CLI에서 "할머니 여행 사진", "가족 문서" 등으로 질의할 수 있습니다.  
+(일부 PDF 링크가 환경에 따라 실패할 수 있습니다. 그 경우 표의 링크를 브라우저에서 열어 `data/documents/` 에 저장하거나, 아무 PDF를 넣어도 됩니다.)
+
+리포 전체 구조: [docs/REPO_STRUCTURE.md](docs/REPO_STRUCTURE.md)
+
 ## 설치 및 실행
 
 ### 1. 의존성
@@ -59,11 +99,26 @@ ollama pull mistral:7b-instruct
 
 ### 3. Qdrant (메모리/가족 검색 권장)
 
-메모리 저장·검색 및 가족 메모리는 **Qdrant**가 필요합니다. 없으면 앱 기동 시 `ensureCollection`에서 연결 실패할 수 있습니다.
+메모리 저장·검색 및 가족 메모리는 **Qdrant**가 필요합니다. 없으면 앱은 기동하지만 메모리 저장/검색이 비활성화됩니다.
+
+**Docker로 Qdrant만 실행:**
 
 ```bash
-# Docker 예시
-docker run -p 6333:6333 qdrant/qdrant
+# 기본 실행 (포트 6333)
+docker run -d --name qdrant -p 6333:6333 qdrant/qdrant
+
+# 데이터 유지(볼륨)하고 실행
+docker run -d --name qdrant -p 6333:6333 -v qdrant_storage:/qdrant/storage qdrant/qdrant
+```
+
+- 브라우저: http://localhost:6333/dashboard (관리 UI)
+- 앱은 `http://localhost:6333` 로 자동 연결 (기본 설정)
+
+**중지/삭제:**
+
+```bash
+docker stop qdrant
+docker rm qdrant
 ```
 
 ### 4. 빌드 및 실행
@@ -78,6 +133,26 @@ pnpm run start:prod
 ```
 
 기본 포트는 **3001**입니다. `PORT=8080 pnpm run start:prod` 로 변경할 수 있습니다.
+
+### 5. 배포 (Docker)
+
+**이미지 빌드 및 실행** (Ollama·Qdrant는 호스트 또는 별도 서비스로 연결):
+
+```bash
+docker build -t custom-brain .
+docker run -p 3001:3001 --env-file .env custom-brain
+```
+
+**docker-compose** (앱 + Qdrant 한 번에):
+
+```bash
+docker compose up -d
+# Ollama는 호스트에서 실행: ollama serve && ollama pull mistral:7b-instruct
+```
+
+- 브라우저: http://localhost:3001/
+- 초기화: `curl -X POST http://localhost:3001/brain/family/initialize`
+- 샘플 데이터는 호스트의 `data/` 를 마운트해 사용하거나, 컨테이너 안 `data/` 에 미리 넣어두면 됩니다.
 
 ## API
 
@@ -98,6 +173,7 @@ pnpm run start:prod
 | POST | `/brain/family/addFolder` | `{ "folderPath", "person"? }` | 가족 사진·문서 폴더 일괄 추가 |
 | POST | `/brain/family/addPhoto` | `{ "filePath", "person"? }` | 가족 사진 1건 추가 (경로 → LLM 설명 → 저장) |
 | POST | `/brain/family/addDocument` | `{ "filePath", "person"? }` | 가족 문서 1건 추가 (PDF/TXT/MD 요약 → 저장) |
+| POST | `/brain/family/initialize` | - | **테스트 초기화**: family_texts.json + images/documents 폴더 일괄 로드 |
 | GET | `/brain/family/file` | `?path=...` | 가족 파일 서빙 (data/ 하위 사진·PDF·문서, 브라우저에서 보기용) |
 
 ### 테스트 방법
@@ -155,7 +231,31 @@ curl -X POST http://localhost:3001/brain/family/addPhoto \
 curl -X POST http://localhost:3001/brain/family/addDocument \
   -H "Content-Type: application/json" \
   -d '{"filePath": "/path/to/story.pdf", "person": "grandfather"}'
+
+# 테스트용 초기화 (family_texts.json + data/images + data/documents 한 번에 로드)
+curl -X POST http://localhost:3001/brain/family/initialize
 ```
+
+## 테스트용 가족 데이터셋 (바로 실행 가능)
+
+리포지터리에 **실제 테스트용 데이터**가 포함되어 있어, 서버만 띄우고 초기화하면 바로 질의할 수 있습니다.
+
+| 항목 | 위치 | 설명 |
+|------|------|------|
+| 텍스트 기록 | `data/family_texts.json` | 할아버지/할머니/부모님 생애·가족 여행·모임 (7건) |
+| 사진 예제 | `data/images/` | 파일명 예: family_trip_1975.jpg, grandma_birthday_1980.jpg, parents_wedding_2000.jpg |
+| 문서 예제 | `data/documents/` | 파일명 예: family_letter_1970.pdf, family_event_1985.pdf |
+
+**실행 순서**
+
+1. `pnpm install` → Ollama·Qdrant 실행 (선택: MongoDB는 mongo 쿼리용)
+2. `pnpm run start:dev` → 서버 기동 (기본 3001)
+3. **초기화 한 번**: `curl -X POST http://localhost:3001/brain/family/initialize`
+4. 브라우저 **http://localhost:3001/** → 질문 입력 (예: "할아버지 이야기 알려줘")
+5. **OpenClaw/CLI 테스트**: `node scripts/query-family-brain.js "할머니 여행 사진 보여줘"`
+
+`scripts/query-family-brain.js`는 OpenClaw Agent처럼 `POST /brain/ask`를 호출해 답변만 출력합니다.  
+환경 변수: `BRAIN_URL=http://localhost:3001` (기본 3001).
 
 ## 가족 메모리 (Family Memory)
 
@@ -190,13 +290,15 @@ curl -X POST http://localhost:3001/brain/family/addDocument \
 
 ## 사용 시나리오 (가족 메모리)
 
-1. **data/images/** 에 사진, **data/documents/** 에 PDF·문서 넣기**
-2. **폴더 일괄 저장**  
-   `POST /brain/family/addFolder`  
-   body: `{ "folderPath": "./data/images", "person": "all" }` (또는 `./data/documents`)
+1. **(선택) data/images/** 에 사진, **data/documents/** 에 PDF·문서 넣기 (예제 파일명은 각 폴더 README.txt 참고)
+2. **초기화 한 번**  
+   `POST /brain/family/initialize`  
+   → `data/family_texts.json` 로드 + images/documents 폴더 일괄 저장  
+   (또는 개별로 `POST /brain/family/addFolder`)
 3. **브라우저에서 http://localhost:3001/** 열기 → 질문 입력 (예: "할머니 여행 사진 보여줘")
 4. AI 답변 + 관련 사진·문서 카드 표시 → 사진 클릭 시 열기, 문서 링크 클릭 시 보기
-5. **OpenClaw Agent**에서도 `POST /brain/ask` 로 자연어 질문 호출 가능
+5. **OpenClaw Agent**에서도 `POST /brain/ask` 로 자연어 질문 호출 가능.  
+   CLI 테스트: `node scripts/query-family-brain.js "질문"`
 
 ## 프로젝트 구조
 
@@ -206,9 +308,12 @@ public/                 # Family Brain 웹 UI (정적 파일)
 ├── style.css
 └── main.js
 data/
+├── family_texts.json   # 테스트용 텍스트 기록 (initialize 시 자동 로드)
 ├── images/             # 가족 사진 (addFolder/addPhoto로 저장)
 ├── documents/          # 가족 문서 (PDF, TXT, MD)
 └── README.md
+scripts/
+└── query-family-brain.js   # OpenClaw 스타일 CLI 질의 (node scripts/query-family-brain.js "질문")
 src/
 ├── app.ts                 # 앱 생성/부트스트랩
 ├── app.module.ts
@@ -234,8 +339,9 @@ src/
 │   ├── codeMemory.service.ts   # 코드 벡터 저장·검색
 │   ├── codeRag.service.ts      # Code Brain RAG 질의
 │   ├── codeIndex.service.ts    # 인덱싱 오케스트레이션
-│   ├── familyMemory.service.ts # 가족 사진/문서 추가 (addPhoto, addDocument, addFamilyFolder)
-│   ├── types/                  # mongo.types, code.types (LoadedFile, ParsedChunk, CodeSearchResult 등)
+│   ├── familyMemory.service.ts   # 가족 사진/문서 추가 (addPhoto, addDocument, addFamilyFolder)
+│   ├── familyInitialize.service.ts # 테스트 초기화 (family_texts.json + images/documents 폴더)
+│   ├── types/                    # mongo.types, code.types (LoadedFile, ParsedChunk, CodeSearchResult 등)
 │   └── dto/
 ├── routes/
 │   └── brain.routes.ts     # /brain/* 컨트롤러

@@ -163,4 +163,16 @@ describe('Brain API (e2e)', () => {
       );
     });
   });
+
+  describe('POST /brain/family/initialize', () => {
+    it('returns textsLoaded, imagesAdded, documentsAdded, errors', async () => {
+      const res = await request(app.getHttpServer())
+        .post('/brain/family/initialize')
+        .expect(201);
+      expect(res.body).toHaveProperty('textsLoaded');
+      expect(res.body).toHaveProperty('imagesAdded');
+      expect(res.body).toHaveProperty('documentsAdded');
+      expect(Array.isArray(res.body.errors)).toBe(true);
+    });
+  });
 });

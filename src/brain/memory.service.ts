@@ -1,4 +1,4 @@
-import { Injectable, OnModuleInit } from '@nestjs/common';
+import { Injectable, Logger, OnModuleInit } from '@nestjs/common';
 import { randomUUID } from 'node:crypto';
 import { EmbeddingService } from './embedding.service';
 import { VectorStore } from '../vector/vectorStore';
@@ -16,13 +16,34 @@ export type MemoryPayload = {
 
 @Injectable()
 export class MemoryService implements OnModuleInit {
+  private readonly logger = new Logger(MemoryService.name);
+  private qdrantReady = false;
+
   constructor(
     private readonly embedding: EmbeddingService,
     private readonly vectorStore: VectorStore,
   ) {}
 
   async onModuleInit(): Promise<void> {
-    await this.vectorStore.ensureCollection(MEMORY_COLLECTION, MEMORY_VECTOR_SIZE);
+    try {
+      await this.vectorStore.ensureCollection(MEMORY_COLLECTION, MEMORY_VECTOR_SIZE);
+      this.qdrantReady = true;
+    } catch (err) {
+      this.logger.warn(
+        'Qdrant not available (localhost:6333). Memory store/search will be disabled until Qdrant is running.',
+      );
+    }
+  }
+
+  private async ensureReady(): Promise<boolean> {
+    if (this.qdrantReady) return true;
+    try {
+      await this.vectorStore.ensureCollection(MEMORY_COLLECTION, MEMORY_VECTOR_SIZE);
+      this.qdrantReady = true;
+      return true;
+    } catch {
+      return false;
+    }
   }
 
   async recall(): Promise<MemoryPayload[]> {
@@ -32,23 +53,29 @@ export class MemoryService implements OnModuleInit {
   /**
    * Search memory by query (embedding + vector search).
    * Returns array of { text, ...metadata } sorted by relevance.
+   * Qdrant 미연결 시 빈 배열 반환.
    */
   async search(query: string, limit = 10): Promise<MemoryPayload[]> {
+    if (!(await this.ensureReady())) return [];
     const vector = await this.embedding.embed(query);
     if (vector.length === 0) return [];
-    const results = await this.vectorStore.search(MEMORY_COLLECTION, vector, limit);
-    return results.map((r) => (r.payload ?? {}) as MemoryPayload);
+    try {
+      const results = await this.vectorStore.search(MEMORY_COLLECTION, vector, limit);
+      return results.map((r) => (r.payload ?? {}) as MemoryPayload);
+    } catch {
+      return [];
+    }
   }
 
   /**
    * Store text with optional metadata. Embeds text and upserts to vector store.
-   * metadata.type: family_history | family_memory | event 등
-   * metadata.person, metadata.source, metadata.file 등 가족 메모리 스키마 지원.
+   * Qdrant 미연결 시 무시.
    */
   async store(
     text: string,
     options?: { source?: string } & Record<string, unknown>,
   ): Promise<void> {
+    if (!(await this.ensureReady())) return;
     const vector = await this.embedding.embed(text);
     if (vector.length === 0) return;
     const timestamp =
@@ -56,8 +83,12 @@ export class MemoryService implements OnModuleInit {
         ? options.timestamp
         : Math.floor(Date.now() / 1000);
     const payload: MemoryPayload = { text, ...options, timestamp };
-    await this.vectorStore.upsert(MEMORY_COLLECTION, [
-      { id: randomUUID(), vector, payload },
-    ]);
+    try {
+      await this.vectorStore.upsert(MEMORY_COLLECTION, [
+        { id: randomUUID(), vector, payload },
+      ]);
+    } catch (err) {
+      this.logger.warn('Memory store failed (Qdrant may be down).', err);
+    }
   }
 }

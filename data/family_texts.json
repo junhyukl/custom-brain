@@ -1,0 +1,58 @@
+[
+  {
+    "text": "할아버지는 1940년에 서울에서 태어났다.",
+    "metadata": {
+      "type": "family_history",
+      "person": "grandfather",
+      "source": "text"
+    }
+  },
+  {
+    "text": "할머니는 1942년 전남 순천에서 태어나셨다.",
+    "metadata": {
+      "type": "family_history",
+      "person": "grandmother",
+      "source": "text"
+    }
+  },
+  {
+    "text": "엄마는 1970년 5월 3일 부산에서 태어났다.",
+    "metadata": {
+      "type": "family_history",
+      "person": "mother",
+      "source": "text"
+    }
+  },
+  {
+    "text": "아빠는 1968년 대구에서 태어났다.",
+    "metadata": {
+      "type": "family_history",
+      "person": "father",
+      "source": "text"
+    }
+  },
+  {
+    "text": "1975년 가족 여행, 설악산.",
+    "metadata": {
+      "type": "family_memory",
+      "person": "all",
+      "source": "text"
+    }
+  },
+  {
+    "text": "1980년 할머니 생일, 가족 모임.",
+    "metadata": {
+      "type": "family_memory",
+      "person": "grandmother",
+      "source": "text"
+    }
+  },
+  {
+    "text": "2000년 부모님 결혼 기념.",
+    "metadata": {
+      "type": "family_memory",
+      "person": "all",
+      "source": "text"
+    }
+  }
+]

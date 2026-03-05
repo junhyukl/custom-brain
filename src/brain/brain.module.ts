@@ -13,6 +13,7 @@ import { CodeMemoryService } from './codeMemory.service';
 import { CodeRagService } from './codeRag.service';
 import { CodeIndexService } from './codeIndex.service';
 import { FamilyMemoryService } from './familyMemory.service';
+import { FamilyInitializeService } from './familyInitialize.service';
 import { BrainRoutes } from '../routes/brain.routes';
 import { VectorModule } from '../vector/vector.module';
 import { LlmModule } from '../llm/llm.module';
@@ -36,6 +37,7 @@ import { DatabaseModule } from '../db/database.module';
     CodeRagService,
     CodeIndexService,
     FamilyMemoryService,
+    FamilyInitializeService,
   ],
   exports: [
     MemoryService,
@@ -52,6 +54,7 @@ import { DatabaseModule } from '../db/database.module';
     CodeRagService,
     CodeIndexService,
     FamilyMemoryService,
+    FamilyInitializeService,
   ],
 })
 export class BrainModule {}

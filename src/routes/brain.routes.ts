@@ -19,6 +19,7 @@ import { MongoQueryService } from '../brain/mongoQuery.service';
 import { CodeRagService } from '../brain/codeRag.service';
 import { CodeIndexService } from '../brain/codeIndex.service';
 import { FamilyMemoryService } from '../brain/familyMemory.service';
+import { FamilyInitializeService } from '../brain/familyInitialize.service';
 import { ChatDto } from '../brain/dto/chat.dto';
 import { AskDto } from '../brain/dto/ask.dto';
 import { MongoAskDto } from '../brain/dto/mongoAsk.dto';
@@ -44,6 +45,7 @@ export class BrainRoutes {
     private readonly codeRag: CodeRagService,
     private readonly codeIndex: CodeIndexService,
     private readonly familyMemory: FamilyMemoryService,
+    private readonly familyInitialize: FamilyInitializeService,
   ) {}
 
   @Post('chat')
@@ -147,6 +149,12 @@ export class BrainRoutes {
   async addFamilyDocument(@Body() body: AddFamilyDocumentDto) {
     const person = body.person ?? 'all';
     return this.familyMemory.addFamilyDocument(body.filePath, person);
+  }
+
+  /** 테스트용 초기화: data/family_texts.json 로드 + data/images, data/documents 폴더 일괄 저장 */
+  @Post('family/initialize')
+  async initializeFamily() {
+    return this.familyInitialize.initializeFamilyBrain();
   }
 
   /**

@@ -18,7 +18,10 @@
     "test:watch": "jest --watch",
     "test:cov": "jest --coverage",
     "test:debug": "node --inspect-brk -r tsconfig-paths/register -r ts-node/register pnpm exec jest --runInBand",
-    "test:e2e": "jest --config ./test/jest-e2e.json"
+    "test:e2e": "jest --config ./test/jest-e2e.json",
+    "family:init": "curl -s -X POST http://localhost:3001/brain/family/initialize",
+    "family:query": "node scripts/query-family-brain.js",
+    "sample:download": "node scripts/download-sample-data.js"
   },
   "dependencies": {
     "@nestjs/common": "^11.0.1",
