@@ -41,4 +41,24 @@ export class VectorService {
       },
     ]);
   }
+
+  /**
+   * Save a memory point to Qdrant (id + vector + payload).
+   * For full flow (Qdrant + Mongo Memory) use MemoryService.store() instead.
+   */
+  async saveVector(params: {
+    id: string;
+    type: string;
+    content: string;
+    metadata?: Record<string, unknown>;
+    embedding: number[];
+  }): Promise<void> {
+    await this.insert({
+      id: params.id,
+      type: params.type,
+      content: params.content,
+      metadata: params.metadata,
+      vector: params.embedding,
+    });
+  }
 }

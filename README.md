@@ -67,6 +67,202 @@ pnpm run start:prod
 
 기본 포트는 **3001**입니다. `PORT=8080 pnpm run start:prod` 로 변경할 수 있습니다.
 
+---
+
+## 전체 사용법
+
+### 준비 사항 한눈에
+
+| 항목 | 용도 | 필수 |
+|------|------|------|
+| **Ollama** | LLM(대화/질의), Vision(사진 설명), Embedding(벡터) | ✅ |
+| **Qdrant** | 벡터 검색 (메모리/사진 검색) | ✅ (메모리 사용 시) |
+| **MongoDB** | 메모리·가족 메타데이터 저장 | ✅ (메모리 사용 시) |
+
+필요한 Ollama 모델:
+
+```bash
+ollama pull mistral:7b-instruct   # 채팅/질의
+ollama pull nomic-embed-text      # 벡터 검색
+ollama pull llava                 # 사진 설명 (대량 수집 시)
+```
+
+---
+
+### 1. 서버 실행
+
+```bash
+# 1) 의존성 설치
+pnpm install
+
+# 2) Qdrant + MongoDB 띄우기 (기존 컨테이너 있으면 재사용)
+.\docker-up.ps1
+# 또는: docker compose -f docker/docker-compose.yml up -d
+
+# 3) 서버 실행
+pnpm run start:dev
+```
+
+서버는 기본적으로 `http://localhost:3001` 에서 동작합니다.
+
+---
+
+### 2. 채팅 / 질의
+
+| 용도 | Method | Path | Body |
+|------|--------|------|------|
+| 한 턴 채팅 (RAG + 자동 메모리 저장) | POST | `/brain/chat` | `{ "message": "..." }` |
+| 질의 (검색 → LLM 답변 → 자동 메모리) | POST | `/brain/ask` | `{ "question": "..." }` |
+| 현재 세션 대화 목록 | GET | `/brain/memory` | - |
+
+**예시**
+
+```bash
+# 채팅
+curl -X POST http://localhost:3001/brain/chat \
+  -H "Content-Type: application/json" \
+  -d "{\"message\":\"오늘 점심 뭐 먹었지?\"}"
+
+# 질의 (기억 기반 답변)
+curl -X POST http://localhost:3001/brain/ask \
+  -H "Content-Type: application/json" \
+  -d "{\"question\":\"우리 가족 2015년 여행 어디 갔어?\"}"
+```
+
+---
+
+### 3. 메모리·검색·타임라인
+
+| 용도 | Method | Path | Query / Body |
+|------|--------|------|--------------|
+| 메모리 저장 | POST | `/brain/memory` | Body: `{ "content", "scope?", "type?", "metadata?" }` |
+| 벡터 검색 | GET | `/brain/memory/search` | `?q=검색어&limit=10&scope=personal\|family` |
+| 최근 메모리 목록 | GET | `/brain/memory/recall` | `?limit=50` |
+| 사진/문서 검색 | GET | `/brain/photos/search` | `?q=검색어&limit=10` |
+| 타임라인 | GET | `/brain/timeline` | `?scope=personal\|family&limit=100` |
+
+**예시**
+
+```bash
+# 메모리 저장
+curl -X POST http://localhost:3001/brain/memory \
+  -H "Content-Type: application/json" \
+  -d "{\"content\":\"2020년 3월 테슬라 구매\",\"type\":\"event\",\"scope\":\"personal\",\"metadata\":{\"date\":\"2020-03\"}}"
+
+# 벡터 검색
+curl "http://localhost:3001/brain/memory/search?q=가족+여행&limit=5"
+
+# 타임라인
+curl "http://localhost:3001/brain/timeline?limit=20"
+```
+
+---
+
+### 4. 가족 사진 대량 수집
+
+수천~수만 장의 사진을 **폴더 스캔 → Vision 설명 → 임베딩 → Qdrant + Memory** 로 자동 수집합니다.
+
+#### 4-1. 폴더 구조
+
+사진을 아래처럼 두면 됩니다.
+
+```
+brain-data/
+  family/
+    photos/
+      2015_korea_trip/
+        IMG_001.jpg
+        IMG_002.jpg
+      grandfather/
+        birthday2019.jpg
+```
+
+- `brain-data/family/photos/` 아래에 **폴더 단위**로 정리 (예: 연도_여행명, 인물명 등).
+- 지원 확장자: `.jpg`, `.jpeg`, `.png`, `.webp`.
+
+#### 4-2. 수집 스크립트 실행
+
+**서버를 띄울 필요 없이** 스크립트만 실행하면 됩니다. (Ollama, Qdrant, MongoDB는 실행 중이어야 함.)
+
+```bash
+# 기본 경로: brain-data/family/photos
+pnpm run ingest-photos
+
+# 다른 폴더 지정 (Windows PowerShell)
+$env:PHOTO_DIR="C:\Photos\가족사진"; pnpm run ingest-photos
+
+# 다른 폴더 지정 (Bash)
+PHOTO_DIR=./my-photos pnpm run ingest-photos
+```
+
+- 각 이미지마다 **Vision(llava)** 으로 설명 생성 → **embedding** 생성 → **Qdrant + Mongo** 에 저장.
+- 콘솔에 `processing <경로>`, 마지막에 `Done. { done, skip, err }` 가 출력됩니다.
+
+#### 4-3. 사진 한 장만 API로 분석
+
+이미지(base64) 한 장을 보내서 설명 생성 + 메모리 저장:
+
+```bash
+# base64 이미지를 POST (실제로는 이미지 파일을 base64 인코딩해서 전송)
+curl -X POST http://localhost:3001/brain/photo/analyze \
+  -H "Content-Type: application/json" \
+  -d "{\"image\":\"<base64 문자열>\",\"date\":\"2015-08\",\"people\":[\"엄마\",\"아빠\"]}"
+```
+
+---
+
+### 5. 가족 트리
+
+| 용도 | Method | Path | Body |
+|------|--------|------|------|
+| 가족 트리 조회 | GET | `/brain/family/tree` | - |
+| 가족 구성원 추가 | POST | `/brain/family/persons` | `{ "name", "relation", "birthDate?", "description?", "parentIds?" }` |
+
+**relation** 예: `father`, `mother`, `grandfather`, `grandmother`, `child`, `spouse`, `sibling`.
+
+**예시**
+
+```bash
+# 구성원 추가
+curl -X POST http://localhost:3001/brain/family/persons \
+  -H "Content-Type: application/json" \
+  -d "{\"name\":\"홍길동\",\"relation\":\"grandfather\",\"birthDate\":\"1940-01-15\",\"description\":\"할아버지\"}"
+
+# 트리 조회
+curl http://localhost:3001/brain/family/tree
+```
+
+---
+
+### 6. 스크립트 요약
+
+| 명령 | 설명 |
+|------|------|
+| `pnpm run start:dev` | 개발 서버 (watch) |
+| `pnpm run start:prod` | 프로덕션 서버 |
+| `pnpm run ingest-photos` | 가족 사진 폴더 스캔 → AI 메모리 수집 |
+| `pnpm run build` | 빌드 |
+| `pnpm run test` | 단위 테스트 |
+
+---
+
+### 7. 환경 변수
+
+| 변수 | 기본값 | 설명 |
+|------|--------|------|
+| `PORT` | `3001` | 서버 포트 |
+| `OLLAMA_URL` | `http://localhost:11434` | Ollama API |
+| `QDRANT_URL` | `http://localhost:6333` | Qdrant API |
+| `MONGO_URL` | `mongodb://localhost:27017` | MongoDB 연결 문자열 |
+| `MONGO_DB_NAME` | `custom_brain` | MongoDB DB 이름 |
+| `BRAIN_DATA_PATH` | `./brain-data` | brain-data 루트 경로 |
+| `PHOTO_DIR` | `brain-data/family/photos` | 사진 수집 스크립트 기본 폴더 |
+| `VISION_MODEL` | `llava` | 사진 설명용 Vision 모델 |
+
+`.env` 파일을 만들어 두면 위 값들을 덮어쓸 수 있습니다.
+
+---
+
 ## API
 
 | Method | Path | Body | 설명 |
@@ -115,6 +311,7 @@ custom-brain/
 ├── docker/
 │   └── docker-compose.yml # Qdrant + Mongo
 ├── scripts/
+│   ├── ingest-photos.ts   # 가족 사진 폴더 스캔 → Vision·임베딩·Qdrant·Memory (대량 수집)
 │   ├── ingest-folder.ts   # 폴더 스캔 후 API로 수집
 │   └── rebuild-vector.ts  # 벡터 인덱스 재구성
 └── src/
@@ -168,6 +365,7 @@ custom-brain/
 | `pnpm run start` | 일반 시작 |
 | `pnpm run start:dev` | watch 모드 |
 | `pnpm run start:prod` | dist 기반 프로덕션 |
+| `pnpm run ingest-photos` | 가족 사진 폴더 스캔 → Vision·임베딩·Qdrant·Memory 저장 |
 | `pnpm run lint` | ESLint |
 | `pnpm run format` | Prettier |
 | `pnpm run test` | 단위 테스트 (Jest) |
