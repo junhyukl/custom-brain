@@ -2,8 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { MemoryService } from './memory.service';
 import { LlmClient } from '../llm/llmClient';
 import { MemoryEvaluatorService } from './memoryEvaluator.service';
-
-const ASK_MODEL = 'mistral:7b-instruct';
+import { DEFAULT_LLM_MODEL } from '../common/constants';
 
 /**
  * askBrain(question):
@@ -31,7 +30,7 @@ Question:
 ${question}
 `;
 
-    const answer = await this.llm.generate(ASK_MODEL, prompt);
+    const answer = await this.llm.generate(DEFAULT_LLM_MODEL, prompt);
 
     await this.memoryEvaluator.evaluateAndMaybeStore(question);
     await this.memoryEvaluator.evaluateAndMaybeStore(answer);

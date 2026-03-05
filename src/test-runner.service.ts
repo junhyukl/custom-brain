@@ -1,21 +1,24 @@
-import { Controller, Get, Post, Res } from '@nestjs/common';
-import { Response } from 'express';
+import { Injectable } from '@nestjs/common';
 import { spawnSync } from 'node:child_process';
 import { join } from 'node:path';
 
-@Controller('test')
-export class TestController {
-  @Get()
-  ui(@Res() res: Response) {
-    res.type('html').send(TestController.getHtml());
+export interface TestRunResult {
+  success: boolean;
+  exitCode: number | null;
+  output: string;
+}
+
+@Injectable()
+export class TestRunnerService {
+  /** 프로젝트 루트 (dist/ 기준 상위) */
+  private get projectRoot(): string {
+    return join(__dirname, '..');
   }
 
-  @Post('run')
-  run() {
-    const cwd = join(__dirname, '../..');
+  runTests(): TestRunResult {
     const result = spawnSync('npm', ['run', 'test', '--', '--no-cache'], {
       encoding: 'utf-8',
-      cwd,
+      cwd: this.projectRoot,
       timeout: 60_000,
       shell: true,
     });
@@ -27,7 +30,7 @@ export class TestController {
     };
   }
 
-  private static getHtml(): string {
+  getTestUiHtml(): string {
     return `<!DOCTYPE html>
 <html lang="ko">
 <head>

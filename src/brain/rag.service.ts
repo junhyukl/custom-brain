@@ -1,8 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { MemoryService } from './memory.service';
 import { LlmClient } from '../llm/llmClient';
-
-const RAG_MODEL = 'mistral:7b-instruct';
+import { DEFAULT_LLM_MODEL } from '../common/constants';
 
 @Injectable()
 export class RagService {
@@ -24,6 +23,6 @@ Question:
 ${question}
 
 Answer based on the context above. If the context is empty, answer from general knowledge.`;
-    return this.llm.generate(RAG_MODEL, prompt);
+    return this.llm.generate(DEFAULT_LLM_MODEL, prompt);
   }
 }

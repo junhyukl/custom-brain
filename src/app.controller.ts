@@ -1,10 +1,14 @@
 import { Controller, Get, Post, Res } from '@nestjs/common';
 import { Response } from 'express';
 import { AppService } from './app.service';
+import { TestRunnerService } from './test-runner.service';
 
 @Controller()
 export class AppController {
-  constructor(private readonly appService: AppService) {}
+  constructor(
+    private readonly appService: AppService,
+    private readonly testRunner: TestRunnerService,
+  ) {}
 
   @Get()
   getHello(): string {
@@ -13,11 +17,11 @@ export class AppController {
 
   @Get('test')
   getTestUi(@Res() res: Response) {
-    res.type('html').send(this.appService.getTestUiHtml());
+    res.type('html').send(this.testRunner.getTestUiHtml());
   }
 
   @Post('test/run')
   runTests() {
-    return this.appService.runTests();
+    return this.testRunner.runTests();
   }
 }

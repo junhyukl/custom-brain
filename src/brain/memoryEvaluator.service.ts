@@ -1,8 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { LlmClient } from '../llm/llmClient';
 import { MemoryService } from './memory.service';
-
-const EVALUATOR_MODEL = 'mistral:7b-instruct';
+import { DEFAULT_LLM_MODEL } from '../common/constants';
 
 @Injectable()
 export class MemoryEvaluatorService {
@@ -38,7 +37,7 @@ ${content}
 
 Answer YES or NO.`;
 
-    const result = await this.llm.generate(EVALUATOR_MODEL, prompt);
+    const result = await this.llm.generate(DEFAULT_LLM_MODEL, prompt);
     return result.trim().toUpperCase().includes('YES');
   }
 }
