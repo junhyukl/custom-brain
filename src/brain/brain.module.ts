@@ -1,12 +1,32 @@
 import { Module } from '@nestjs/common';
-import { BrainController } from './brain.controller';
-import { BrainService } from './brain.service';
-import { RouterService } from './router.service';
-import { ModelService } from './model.service';
 import { MemoryService } from './memory.service';
+import { MemoryEvaluatorService } from './memoryEvaluator.service';
+import { AskBrainService } from './askBrain.service';
+import { EmbeddingService } from './embedding.service';
+import { RagService } from './rag.service';
+import { AgentMemoryService } from './agentMemory.service';
+import { BrainRoutes } from '../routes/brain.routes';
+import { VectorModule } from '../vector/vector.module';
+import { LlmModule } from '../llm/llm.module';
 
 @Module({
-  controllers: [BrainController],
-  providers: [BrainService, RouterService, ModelService, MemoryService],
+  imports: [VectorModule, LlmModule],
+  controllers: [BrainRoutes],
+  providers: [
+    MemoryService,
+    MemoryEvaluatorService,
+    AskBrainService,
+    EmbeddingService,
+    RagService,
+    AgentMemoryService,
+  ],
+  exports: [
+    MemoryService,
+    MemoryEvaluatorService,
+    AskBrainService,
+    EmbeddingService,
+    RagService,
+    AgentMemoryService,
+  ],
 })
 export class BrainModule {}

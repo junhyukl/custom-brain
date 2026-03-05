@@ -1,16 +1,18 @@
-import { Injectable } from '@nestjs/common';
+import { Controller, Get, Post, Res } from '@nestjs/common';
+import { Response } from 'express';
 import { spawnSync } from 'node:child_process';
 import { join } from 'node:path';
 
-@Injectable()
-export class AppService {
-  getHello(): string {
-    return 'Hello World!';
+@Controller('test')
+export class TestController {
+  @Get()
+  ui(@Res() res: Response) {
+    res.type('html').send(TestController.getHtml());
   }
 
-  runTests(): { success: boolean; exitCode: number | null; output: string } {
-    // dist/ 에서 실행되므로 상위가 프로젝트 루트
-    const cwd = join(__dirname, '..');
+  @Post('run')
+  run() {
+    const cwd = join(__dirname, '../..');
     const result = spawnSync('npm', ['run', 'test', '--', '--no-cache'], {
       encoding: 'utf-8',
       cwd,
@@ -25,7 +27,7 @@ export class AppService {
     };
   }
 
-  getTestUiHtml(): string {
+  private static getHtml(): string {
     return `<!DOCTYPE html>
 <html lang="ko">
 <head>
