@@ -16,7 +16,7 @@ export class TestRunnerService {
   }
 
   runTests(): TestRunResult {
-    const result = spawnSync('npm', ['run', 'test', '--', '--no-cache'], {
+    const result = spawnSync('pnpm', ['run', 'test', '--', '--no-cache'], {
       encoding: 'utf-8',
       cwd: this.projectRoot,
       timeout: 60_000,
