@@ -1,8 +1,15 @@
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
+import { join } from 'node:path';
+import { ExpressAdapter } from '@nestjs/platform-express';
+import express from 'express';
 
 export async function createApp() {
-  const app = await NestFactory.create(AppModule);
+  const server = express();
+  const publicDir = join(process.cwd(), 'public');
+  server.use(express.static(publicDir));
+
+  const app = await NestFactory.create(AppModule, new ExpressAdapter(server));
   app.enableCors();
   return app;
 }

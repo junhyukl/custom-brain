@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Family Brain Agent</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <header>
+    <h1>Family Brain Agent</h1>
+    <p class="subtitle">질문하면 AI가 메모리에서 검색해 답변하고, 관련 사진·문서를 보여줍니다.</p>
+  </header>
+  <main>
+    <section class="ask-section">
+      <textarea id="question" placeholder="예: 할머니 여행 사진 보여줘, 할아버지 출생 이야기 알려줘..." rows="3"></textarea>
+      <button id="askBtn" type="button">질문</button>
+    </section>
+    <section id="answer" class="answer-section" aria-live="polite"></section>
+    <section id="results" class="results-section" aria-label="검색 결과"></section>
+  </main>
+  <script src="main.js"></script>
+</body>
+</html>

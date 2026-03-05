@@ -1,4 +1,15 @@
-import { BadRequestException, Body, Controller, Get, Post } from '@nestjs/common';
+import {
+  BadRequestException,
+  Body,
+  Controller,
+  Get,
+  Post,
+  Query,
+  Res,
+} from '@nestjs/common';
+import { Response } from 'express';
+import { existsSync } from 'node:fs';
+import { resolve, sep } from 'node:path';
 import { AgentMemoryService } from '../brain/agentMemory.service';
 import { MemoryService } from '../brain/memory.service';
 import { RagService } from '../brain/rag.service';
@@ -136,5 +147,44 @@ export class BrainRoutes {
   async addFamilyDocument(@Body() body: AddFamilyDocumentDto) {
     const person = body.person ?? 'all';
     return this.familyMemory.addFamilyDocument(body.filePath, person);
+  }
+
+  /**
+   * 가족 메모리 파일 서빙 (사진/PDF/문서). path는 data/ 하위 또는 data 기준 절대 경로.
+   * 브라우저 UI에서 사진 클릭·문서 보기용.
+   */
+  @Get('family/file')
+  async serveFamilyFile(@Query('path') path: string, @Res() res: Response) {
+    if (!path || typeof path !== 'string') {
+      throw new BadRequestException('path is required');
+    }
+    const dataRoot = resolve(process.cwd(), 'data');
+    const resolved = path.startsWith('/')
+      ? resolve(path)
+      : resolve(process.cwd(), path);
+    const allowedPrefix = dataRoot + sep;
+    if (resolved !== dataRoot && !resolved.startsWith(allowedPrefix)) {
+      throw new BadRequestException('path must be under data/');
+    }
+    if (!existsSync(resolved)) {
+      res.status(404).send('File not found');
+      return;
+    }
+    const ext = resolved.toLowerCase().slice(resolved.lastIndexOf('.'));
+    const types: Record<string, string> = {
+      '.jpg': 'image/jpeg',
+      '.jpeg': 'image/jpeg',
+      '.png': 'image/png',
+      '.gif': 'image/gif',
+      '.webp': 'image/webp',
+      '.pdf': 'application/pdf',
+      '.txt': 'text/plain; charset=utf-8',
+      '.md': 'text/markdown; charset=utf-8',
+    };
+    const contentType = types[ext];
+    if (contentType) res.setHeader('Content-Type', contentType);
+    res.sendFile(resolved, (err) => {
+      if (err && !res.headersSent) res.status(500).send('Error sending file');
+    });
   }
 }

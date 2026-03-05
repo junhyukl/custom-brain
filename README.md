@@ -83,7 +83,7 @@ pnpm run start:prod
 
 | Method | Path | Body | 설명 |
 |--------|------|------|------|
-| GET | `/` | - | 헬스 체크 |
+| GET | `/` | - | **Family Brain 웹 UI** (public/index.html) |
 | GET | `/test` | - | 테스트 러너 UI (브라우저) |
 | POST | `/test/run` | - | 테스트 실행 (`pnpm run test`), JSON 결과 반환 |
 | GET | `/brain/memory` | - | 현재 세션 대화 목록 |
@@ -98,6 +98,7 @@ pnpm run start:prod
 | POST | `/brain/family/addFolder` | `{ "folderPath", "person"? }` | 가족 사진·문서 폴더 일괄 추가 |
 | POST | `/brain/family/addPhoto` | `{ "filePath", "person"? }` | 가족 사진 1건 추가 (경로 → LLM 설명 → 저장) |
 | POST | `/brain/family/addDocument` | `{ "filePath", "person"? }` | 가족 문서 1건 추가 (PDF/TXT/MD 요약 → 저장) |
+| GET | `/brain/family/file` | `?path=...` | 가족 파일 서빙 (data/ 하위 사진·PDF·문서, 브라우저에서 보기용) |
 
 ### 테스트 방법
 
@@ -177,9 +178,37 @@ curl -X POST http://localhost:3001/brain/family/addDocument \
 
 데이터 폴더: `data/images`, `data/documents` (자세한 설명은 `data/README.md`).
 
+## 브라우저 UI (Family Brain Agent)
+
+서버 실행 후 **http://localhost:3001/** 에 접속하면 질문 UI를 사용할 수 있습니다.
+
+- **질문 입력** → AI 답변 + 관련 메모리 검색 결과 표시
+- **사진** → 썸네일 클릭 시 `GET /brain/family/file?path=...` 로 새 탭에서 열기
+- **PDF/문서** → 링크 클릭 시 새 탭에서 보기 (path는 `data/` 하위여야 함)
+
+`public/` 폴더: `index.html`, `style.css`, `main.js` (정적 파일은 루트 `/` 에서 제공).
+
+## 사용 시나리오 (가족 메모리)
+
+1. **data/images/** 에 사진, **data/documents/** 에 PDF·문서 넣기**
+2. **폴더 일괄 저장**  
+   `POST /brain/family/addFolder`  
+   body: `{ "folderPath": "./data/images", "person": "all" }` (또는 `./data/documents`)
+3. **브라우저에서 http://localhost:3001/** 열기 → 질문 입력 (예: "할머니 여행 사진 보여줘")
+4. AI 답변 + 관련 사진·문서 카드 표시 → 사진 클릭 시 열기, 문서 링크 클릭 시 보기
+5. **OpenClaw Agent**에서도 `POST /brain/ask` 로 자연어 질문 호출 가능
+
 ## 프로젝트 구조
 
 ```
+public/                 # Family Brain 웹 UI (정적 파일)
+├── index.html
+├── style.css
+└── main.js
+data/
+├── images/             # 가족 사진 (addFolder/addPhoto로 저장)
+├── documents/          # 가족 문서 (PDF, TXT, MD)
+└── README.md
 src/
 ├── app.ts                 # 앱 생성/부트스트랩
 ├── app.module.ts
