@@ -183,10 +183,11 @@ pnpm -C frontend install
 pnpm run dev:ui
 ```
 
-- 브라우저에서 **http://localhost:5173** 접속.
-- 검색창에 "2015년 가족 여행", "Tesla 문서" 등 입력 후 **사진 / 문서 / 메모리** 탭으로 검색.
-- 사진은 썸네일로 표시되고, 문서는 파일명·텍스트 요약으로 표시됩니다. 이미지는 백엔드가 `/brain-data` 로 서빙하므로 `brain-data/` 폴더 내 경로가 그대로 URL이 됩니다.
-- 모바일 앱(React Native)에서도 동일한 `/brain/photos/search`, `/brain/documents/search`, `/brain/memory/search` 엔드포인트를 호출하면 됩니다.
+- 브라우저에서 **http://localhost:5173** 접속. **Full UI** 한 페이지에 검색 → Timeline → Family Graph가 모두 표시됩니다.
+- **검색**: 사진/문서/메모리 탭으로 검색. 사진 썸네일·문서 요약 표시. (Backend: `/brain/photos|documents|memory/search`)
+- **Timeline**: 연도별 이벤트 목록. (Backend: `/brain/timeline`)
+- **Family Graph**: 가족 관계 Force-directed 2D 그래프. (Backend: `/brain/family/tree`)
+- 스택: React + Tailwind CSS + react-force-graph-2d. 이미지는 `/brain-data` 로 서빙.
 
 ---
 

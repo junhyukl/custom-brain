@@ -1,10 +1,9 @@
-* {
-  box-sizing: border-box;
-}
-body {
-  margin: 0;
-  font-family: system-ui, -apple-system, sans-serif;
-  background: #0f0f14;
-  color: #e4e4e7;
-  min-height: 100vh;
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  body {
+    @apply bg-zinc-950 text-zinc-100 min-h-screen antialiased;
+  }
 }
