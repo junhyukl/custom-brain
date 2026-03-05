@@ -21,6 +21,14 @@ export const MONGO_URL = process.env.MONGO_URL ?? 'mongodb://localhost:27017';
 export const MONGO_DB_NAME = process.env.MONGO_DB_NAME ?? 'custom_brain';
 export const VISION_MODEL = process.env.VISION_MODEL ?? 'llava';
 
+/** Supported photo extensions for ingestion */
+export const PHOTO_EXTENSIONS = ['.jpg', '.jpeg', '.png', '.webp'];
+
+export const PHOTO_EXT_REGEX = /\.(jpg|jpeg|png|webp)$/i;
+
+/** Document extensions for ingestion (PDF, DOCX, TXT, MD) */
+export const DOCUMENT_EXT_REGEX = /\.(pdf|docx|txt|md)$/i;
+
 /** Zero vector for missing embeddings (same dimension as model output). */
 export function zeroVector(dimension = EMBEDDING_DIMENSION): number[] {
   return new Array(dimension).fill(0);

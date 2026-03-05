@@ -15,8 +15,7 @@ import { NestFactory } from '@nestjs/core';
 import { AppModule } from '../src/app.module';
 import { PhotoProcessService } from '../src/ingestion/photo.process';
 import { STORAGE_CONFIG } from '../src/config/storage.config';
-
-const PHOTO_EXT = /\.(jpg|jpeg|png|webp)$/i;
+import { PHOTO_EXT_REGEX } from '../src/common/constants';
 
 const PHOTO_DIRS: { dir: string; scope: 'personal' | 'family' }[] = [
   { dir: STORAGE_CONFIG.personal.photos, scope: 'personal' },
@@ -54,7 +53,7 @@ async function scanFolder(
       continue;
     }
 
-    if (!PHOTO_EXT.test(e.name)) {
+    if (!PHOTO_EXT_REGEX.test(e.name)) {
       skip += 1;
       continue;
     }

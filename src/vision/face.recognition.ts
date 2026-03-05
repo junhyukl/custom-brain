@@ -1,14 +1,10 @@
 /**
- * Face recognition & family tagging using @vladmandic/face-api + canvas.
+ * Face recognition & family tagging (@vladmandic/face-api + canvas).
  * Requires: face models in FACE_MODEL_PATH, family descriptors in brain-data/family/faces.json.
  */
 import fs from 'fs';
-import path from 'path';
 import { STORAGE_CONFIG } from '../config/storage.config';
-
-const FACE_MODEL_PATH =
-  process.env.FACE_MODEL_PATH ?? path.join(process.cwd(), 'face-models');
-const MATCH_THRESHOLD = 0.6;
+import { FACE_MODEL_PATH, FACE_MATCH_THRESHOLD } from '../config/face.config';
 
 export interface FaceMatch {
   name: string;
@@ -23,19 +19,26 @@ interface FamilyDescriptor {
 let modelsLoaded = false;
 let familyDescriptors: FamilyDescriptor[] = [];
 
+function getFaceApi(): typeof import('@vladmandic/face-api') {
+  return require('@vladmandic/face-api');
+}
+
+function getNodeCanvas(): {
+  Canvas: unknown;
+  Image: unknown;
+  ImageData: unknown;
+  loadImage: (p: string) => Promise<unknown>;
+} {
+  return require('canvas');
+}
+
 async function ensureModelsLoaded(): Promise<boolean> {
   if (modelsLoaded) return true;
   try {
-    // eslint-disable-next-line @typescript-eslint/no-require-imports
-    const faceapi = require('@vladmandic/face-api');
-    // eslint-disable-next-line @typescript-eslint/no-require-imports
-    const nodeCanvas = require('canvas');
-    faceapi.env.monkeyPatch({
-      Canvas: nodeCanvas.Canvas,
-      Image: nodeCanvas.Image,
-      ImageData: nodeCanvas.ImageData,
-    });
-
+    const faceapi = getFaceApi();
+    const nodeCanvas = getNodeCanvas();
+    // node-canvas types are compatible at runtime; face-api expects DOM types
+    faceapi.env.monkeyPatch(nodeCanvas as Parameters<typeof faceapi.env.monkeyPatch>[0]);
     if (fs.existsSync(FACE_MODEL_PATH)) {
       await faceapi.nets.ssdMobilenetv1.loadFromDisk(FACE_MODEL_PATH);
       await faceapi.nets.faceLandmark68Net.loadFromDisk(FACE_MODEL_PATH);
@@ -49,12 +52,11 @@ async function ensureModelsLoaded(): Promise<boolean> {
 }
 
 function loadFamilyDescriptors(): void {
-  const p = STORAGE_CONFIG.family.facesJson;
   if (familyDescriptors.length > 0) return;
+  const p = STORAGE_CONFIG.family.facesJson;
   try {
     if (fs.existsSync(p)) {
-      const raw = fs.readFileSync(p, 'utf-8');
-      familyDescriptors = JSON.parse(raw) as FamilyDescriptor[];
+      familyDescriptors = JSON.parse(fs.readFileSync(p, 'utf-8')) as FamilyDescriptor[];
     }
   } catch {
     familyDescriptors = [];
@@ -67,17 +69,14 @@ function loadFamilyDescriptors(): void {
  */
 export async function detectFaces(filePath: string): Promise<FaceMatch[]> {
   loadFamilyDescriptors();
-  const ok = await ensureModelsLoaded();
-  if (!ok) return [];
+  if (!(await ensureModelsLoaded())) return [];
 
   try {
-    // eslint-disable-next-line @typescript-eslint/no-require-imports
-    const faceapi = require('@vladmandic/face-api');
-    // eslint-disable-next-line @typescript-eslint/no-require-imports
-    const nodeCanvas = require('canvas');
+    const faceapi = getFaceApi();
+    const nodeCanvas = getNodeCanvas();
     const img = await nodeCanvas.loadImage(filePath);
     const detections = await faceapi
-      .detectAllFaces(img)
+      .detectAllFaces(img as never)
       .withFaceLandmarks()
       .withFaceDescriptors();
 
@@ -85,16 +84,15 @@ export async function detectFaces(filePath: string): Promise<FaceMatch[]> {
     for (const det of detections) {
       const descriptor = det.descriptor as Float32Array;
       let name = 'unknown';
-      let best = 1;
+      let bestDistance = 1;
       for (const f of familyDescriptors) {
-        const fd = new Float32Array(f.descriptor);
-        const distance = faceapi.euclideanDistance(descriptor, fd);
-        if (distance < MATCH_THRESHOLD && distance < best) {
-          best = distance;
+        const distance = faceapi.euclideanDistance(descriptor, new Float32Array(f.descriptor));
+        if (distance < FACE_MATCH_THRESHOLD && distance < bestDistance) {
+          bestDistance = distance;
           name = f.name;
         }
       }
-      results.push({ name, confidence: 1 - best });
+      results.push({ name, confidence: 1 - bestDistance });
     }
     return results;
   } catch {

@@ -20,6 +20,10 @@ export class PathService {
     return STORAGE_CONFIG.personal.projects;
   }
 
+  personalPhotos(): string {
+    return STORAGE_CONFIG.personal.photos;
+  }
+
   familyPhotos(): string {
     return STORAGE_CONFIG.family.photos;
   }
@@ -30,6 +34,14 @@ export class PathService {
 
   familyDocuments(): string {
     return STORAGE_CONFIG.family.documents;
+  }
+
+  familyFacesJson(): string {
+    return STORAGE_CONFIG.family.facesJson;
+  }
+
+  familyFacesSrc(): string {
+    return STORAGE_CONFIG.family.facesSrc;
   }
 
   /** Resolve path under brain-data (e.g. family/photos/2020.jpg) */

@@ -7,7 +7,9 @@ export class PhotoController {
   constructor(private readonly photoIngest: PhotoIngestService) {}
 
   @Post('photo/analyze')
-  async analyze(@Body() body: AnalyzePhotoDto) {
+  async analyze(
+    @Body() body: AnalyzePhotoDto,
+  ): Promise<{ description: string; memoryId: string }> {
     return this.photoIngest.ingestPhoto(body.image, {
       filePath: body.source,
       date: body.date,

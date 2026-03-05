@@ -1,21 +1,13 @@
 /**
  * 가족 얼굴 DB 구축: faces_src/ 폴더의 사진에서 얼굴 추출 → faces.json 저장
- * 처음 한 번만 실행. 이후 ingest-photos 시 이 DB로 얼굴 태깅.
- *
- * 사용법:
- *   pnpm run build-face-db
- *
- * 폴더 구조:
- *   brain-data/family/faces_src/
- *     Grandfather_01.jpg   -> name: Grandfather
- *     Mother_02.png        -> name: Mother
+ * 사용법: pnpm run build-face-db
+ * 폴더: brain-data/family/faces_src/ (파일명 예: Grandfather_01.jpg → name: Grandfather)
  */
 import fs from 'fs';
 import path from 'path';
 import { STORAGE_CONFIG } from '../src/config/storage.config';
-
-const FACE_MODEL_PATH =
-  process.env.FACE_MODEL_PATH ?? path.join(process.cwd(), 'face-models');
+import { FACE_MODEL_PATH } from '../src/config/face.config';
+import { PHOTO_EXT_REGEX } from '../src/common/constants';
 
 async function buildDB() {
   const facesSrc = STORAGE_CONFIG.family.facesSrc;
@@ -48,7 +40,7 @@ async function buildDB() {
   await faceapi.nets.faceLandmark68Net.loadFromDisk(FACE_MODEL_PATH);
   await faceapi.nets.faceRecognitionNet.loadFromDisk(FACE_MODEL_PATH);
 
-  const files = fs.readdirSync(facesSrc).filter((f) => /\.(jpg|jpeg|png|webp)$/i.test(f));
+  const files = fs.readdirSync(facesSrc).filter((f) => PHOTO_EXT_REGEX.test(f));
   const db: { name: string; descriptor: number[] }[] = [];
 
   for (const file of files) {

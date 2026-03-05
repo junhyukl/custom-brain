@@ -220,6 +220,18 @@ pnpm run ingest-photos
 - 각 이미지: **얼굴 인식** (faces.json 있으면) → **Vision(llava)** 설명 → **embedding** → **Qdrant + Mongo** 저장.
 - 콘솔에 `processing <경로>`, `(N faces: 이름1, 이름2)` 및 `Done. { done, skip, err }` 가 출력됩니다.
 
+#### 4-3-2. 통합 수집 (사진 + 문서 + 메모) — ingest-all
+
+한 번에 **사진** + **문서**(PDF, DOCX, TXT, MD)를 스캔해 벡터화·Qdrant·Memory에 넣습니다.
+
+```bash
+pnpm run ingest-all
+```
+
+- 스캔 경로: `brain-data/personal` (notes, documents, projects, photos), `brain-data/family` (photos, documents, history). `faces_src/`는 제외.
+- **사진**: 기존과 동일 (얼굴 인식 → Vision → embedding → Memory).
+- **문서**: PDF/DOCX는 텍스트 추출, TXT/MD는 그대로 → embedding → Memory (type: `document`). 이후 `/brain/memory/search`·OpenClaw로 검색 가능.
+
 #### 4-4. 사진 한 장만 API로 분석
 
 이미지(base64) 한 장을 보내서 설명 생성 + 메모리 저장:
@@ -263,6 +275,7 @@ curl http://localhost:3001/brain/family/tree
 | `pnpm run start:dev` | 개발 서버 (watch) |
 | `pnpm run start:prod` | 프로덕션 서버 |
 | `pnpm run ingest-photos` | personal + family 사진 스캔 → 얼굴 태깅 → Vision → AI 메모리 수집 |
+| `pnpm run ingest-all` | 사진 + 문서(PDF/DOCX/TXT/MD) 통합 스캔 → 벡터화 → Qdrant·Memory |
 | `pnpm run build-face-db` | faces_src/ → faces.json (가족 얼굴 DB 구축) |
 | `pnpm run build` | 빌드 |
 | `pnpm run test` | 단위 테스트 |
@@ -337,6 +350,7 @@ custom-brain/
 ├── face-models/           # face-api 모델 파일 (얼굴 인식용, 수동 다운로드)
 ├── scripts/
 │   ├── ingest-photos.ts   # personal + family 사진 스캔 → 얼굴·Vision·임베딩·Qdrant·Memory
+│   ├── ingest-all.ts      # 사진 + 문서(PDF/DOCX/TXT/MD) 통합 스캔 → Memory
 │   ├── build-face-db.ts   # faces_src/ → faces.json (가족 얼굴 DB)
 │   ├── ingest-folder.ts   # 폴더 스캔 후 API로 수집
 │   └── rebuild-vector.ts  # 벡터 인덱스 재구성
@@ -392,6 +406,7 @@ custom-brain/
 | `pnpm run start:dev` | watch 모드 |
 | `pnpm run start:prod` | dist 기반 프로덕션 |
 | `pnpm run ingest-photos` | personal + family 사진 스캔 → 얼굴 태깅 → Vision·임베딩·Qdrant·Memory |
+| `pnpm run ingest-all` | 사진 + 문서(PDF/DOCX/TXT/MD) 통합 스캔 → Memory |
 | `pnpm run build-face-db` | faces_src/ → faces.json (가족 얼굴 DB) |
 | `pnpm run lint` | ESLint |
 | `pnpm run format` | Prettier |

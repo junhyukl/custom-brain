@@ -1,12 +1,12 @@
 import { Injectable } from '@nestjs/common';
-import { detectFaces } from '../vision/face.recognition';
+import { detectFaces, type FaceMatch } from '../vision/face.recognition';
 import { ImageDescribeService } from '../vision/image.describe';
 import { MemoryService } from '../brain-core/memory.service';
 
 export interface ProcessPhotoResult {
   memoryId: string;
   description: string;
-  faces: { name: string; confidence: number }[];
+  faces: FaceMatch[];
 }
 
 /**
