@@ -13,4 +13,8 @@ export class SearchService {
   async searchPhotos(query: string, limit = 10) {
     return this.memory.searchPhotos(query, limit);
   }
+
+  async searchDocuments(query: string, limit = 10) {
+    return this.memory.searchDocuments(query, limit);
+  }
 }

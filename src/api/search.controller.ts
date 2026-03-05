@@ -31,4 +31,16 @@ export class SearchController {
     );
     return { results };
   }
+
+  @Get('documents/search')
+  async searchDocuments(
+    @Query('q') q: string,
+    @Query('limit') limit?: string,
+  ): Promise<{ results: Memory[] }> {
+    const results = await this.searchService.searchDocuments(
+      q ?? '',
+      limit ? Number(limit) : 10,
+    );
+    return { results };
+  }
 }

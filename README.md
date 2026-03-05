@@ -139,6 +139,7 @@ curl -X POST http://localhost:3001/brain/ask \
 | 벡터 검색 | GET | `/brain/memory/search` | `?q=검색어&limit=10&scope=personal\|family` |
 | 최근 메모리 목록 | GET | `/brain/memory/recall` | `?limit=50` |
 | 사진/문서 검색 | GET | `/brain/photos/search` | `?q=검색어&limit=10` |
+| 문서 검색 | GET | `/brain/documents/search` | `?q=검색어&limit=10` |
 | 타임라인 | GET | `/brain/timeline` | `?scope=personal\|family&limit=100` |
 
 **예시**
@@ -155,6 +156,18 @@ curl "http://localhost:3001/brain/memory/search?q=가족+여행&limit=5"
 # 타임라인
 curl "http://localhost:3001/brain/timeline?limit=20"
 ```
+
+#### 3-2. Agent + Ollama (질문 → AI 답변)
+
+사진·문서·메모리 검색 툴과 Ollama를 연결해 **질문 → 검색 → LLM 답변**을 한 번에 실행할 수 있습니다.
+
+```bash
+# custom-brain 서버 + Ollama 실행 후
+pnpm run run-agent
+```
+
+- 스크립트가 예시 질문 3개(가족 여행 사진, 할아버지 사진, Tesla 문서)에 대해 **searchMemory / searchPhotos / searchDocuments / timeline / familyTree** 로 context를 모은 뒤 Ollama에 전달해 답변을 출력합니다.
+- OpenClaw 등 에이전트에서는 `docs/openclaw/custom-brain/SKILL.md` 의 Agent Tools 테이블을 참고해 동일한 엔드포인트를 도구로 등록하면 됩니다.
 
 ---
 
@@ -217,7 +230,7 @@ Ollama, Qdrant, MongoDB만 켜두고 스크립트만 실행하면 됩니다.
 pnpm run ingest-photos
 ```
 
-- 각 이미지: **얼굴 인식** (faces.json 있으면) → **Vision(llava)** 설명 → **embedding** → **Qdrant + Mongo** 저장.
+- 각 이미지: **EXIF(날짜/GPS)** 추출 → **얼굴 인식** (faces.json 있으면) → **Vision(llava)** 설명 → **embedding** → **Qdrant + Mongo** 저장.
 - 콘솔에 `processing <경로>`, `(N faces: 이름1, 이름2)` 및 `Done. { done, skip, err }` 가 출력됩니다.
 
 #### 4-3-2. 통합 수집 (사진 + 문서 + 메모) — ingest-all
@@ -231,6 +244,24 @@ pnpm run ingest-all
 - 스캔 경로: `brain-data/personal` (notes, documents, projects, photos), `brain-data/family` (photos, documents, history). `faces_src/`는 제외.
 - **사진**: 기존과 동일 (얼굴 인식 → Vision → embedding → Memory).
 - **문서**: PDF/DOCX는 텍스트 추출, TXT/MD는 그대로 → embedding → Memory (type: `document`). 이후 `/brain/memory/search`·OpenClaw로 검색 가능.
+
+#### 4-3-3. Full Pipeline (병렬 수집 + 타임라인)
+
+사진 10만 장·수천 문서를 **병렬 처리**하고, **타임라인 통계**를 뽑을 때:
+
+```bash
+# 1) 얼굴 DB 구축 (처음 한 번)
+pnpm run build-face-db
+
+# 2) 병렬 ingestion (기본 10 workers, INGEST_WORKERS=20 등으로 변경 가능)
+pnpm run ingest-all-parallel
+
+# 3) 타임라인 통계 (연도별 메모리 건수)
+pnpm run build-timeline
+```
+
+- **ingest-all-parallel**: `async` 큐로 사진·문서를 동시에 처리. EXIF 날짜·GPS는 사진 메타데이터에 자동 반영.
+- **build-timeline**: Mongo 메모리 기준 연도별 건수 출력. 타임라인 조회는 `GET /brain/timeline` 으로 실시간 제공.
 
 #### 4-4. 사진 한 장만 API로 분석
 
@@ -276,7 +307,10 @@ curl http://localhost:3001/brain/family/tree
 | `pnpm run start:prod` | 프로덕션 서버 |
 | `pnpm run ingest-photos` | personal + family 사진 스캔 → 얼굴 태깅 → Vision → AI 메모리 수집 |
 | `pnpm run ingest-all` | 사진 + 문서(PDF/DOCX/TXT/MD) 통합 스캔 → 벡터화 → Qdrant·Memory |
+| `pnpm run ingest-all-parallel` | 병렬 수집 (WORKERS=10, 사진·문서 동시 처리) |
 | `pnpm run build-face-db` | faces_src/ → faces.json (가족 얼굴 DB 구축) |
+| `pnpm run build-timeline` | 메모리 연도별 타임라인 통계 출력 |
+| `pnpm run run-agent` | Agent 예제 (질문 → 검색 툴 → Ollama → 답변) |
 | `pnpm run build` | 빌드 |
 | `pnpm run test` | 단위 테스트 |
 
@@ -317,6 +351,7 @@ curl http://localhost:3001/brain/family/tree
 |--------|------|--------------|------|
 | POST | `/brain/memory` | `{ "content", "scope?", "type?", "metadata?", "source?" }` | 메모리 저장 (Qdrant + Mongo) |
 | GET | `/brain/memory/search` | `?q=...&limit=10&scope=personal|family` | 벡터 검색 |
+| GET | `/brain/documents/search` | `?q=...&limit=10` | 문서 타입 메모리 검색 |
 | GET | `/brain/timeline` | `?scope=&limit=100` | 날짜 기준 타임라인 |
 | GET | `/brain/family/tree` | - | 가족 그래프 |
 | POST | `/brain/family/persons` | `{ "name", "relation", "birthDate?", "description?", "parentIds?" }` | 가족 구성원 추가 |
@@ -350,8 +385,10 @@ custom-brain/
 ├── face-models/           # face-api 모델 파일 (얼굴 인식용, 수동 다운로드)
 ├── scripts/
 │   ├── ingest-photos.ts   # personal + family 사진 스캔 → 얼굴·Vision·임베딩·Qdrant·Memory
-│   ├── ingest-all.ts      # 사진 + 문서(PDF/DOCX/TXT/MD) 통합 스캔 → Memory
-│   ├── build-face-db.ts   # faces_src/ → faces.json (가족 얼굴 DB)
+│   ├── ingest-all.ts           # 사진 + 문서 통합 스캔 → Memory
+│   ├── ingest-all-parallel.ts   # 병렬 수집 (async queue)
+│   ├── build-face-db.ts         # faces_src/ → faces.json (가족 얼굴 DB)
+│   ├── build-timeline.ts        # 타임라인 통계 (연도별 건수)
 │   ├── ingest-folder.ts   # 폴더 스캔 후 API로 수집
 │   └── rebuild-vector.ts  # 벡터 인덱스 재구성
 └── src/
@@ -407,7 +444,9 @@ custom-brain/
 | `pnpm run start:prod` | dist 기반 프로덕션 |
 | `pnpm run ingest-photos` | personal + family 사진 스캔 → 얼굴 태깅 → Vision·임베딩·Qdrant·Memory |
 | `pnpm run ingest-all` | 사진 + 문서(PDF/DOCX/TXT/MD) 통합 스캔 → Memory |
+| `pnpm run ingest-all-parallel` | 병렬 수집 (사진·문서 동시 처리) |
 | `pnpm run build-face-db` | faces_src/ → faces.json (가족 얼굴 DB) |
+| `pnpm run build-timeline` | 타임라인 통계 (연도별 건수) |
 | `pnpm run lint` | ESLint |
 | `pnpm run format` | Prettier |
 | `pnpm run test` | 단위 테스트 (Jest) |

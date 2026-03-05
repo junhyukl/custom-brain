@@ -1,6 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { detectFaces, type FaceMatch } from '../vision/face.recognition';
 import { ImageDescribeService } from '../vision/image.describe';
+import { extractExif } from '../vision/photo.metadata';
 import { MemoryService } from '../brain-core/memory.service';
 
 export interface ProcessPhotoResult {
@@ -10,7 +11,7 @@ export interface ProcessPhotoResult {
 }
 
 /**
- * Full pipeline: Face detection & tagging → Description (Vision) → Embedding → Qdrant + Memory.
+ * Full pipeline: EXIF → Face detection & tagging → Description (Vision) → Embedding → Qdrant + Memory.
  */
 @Injectable()
 export class PhotoProcessService {
@@ -23,6 +24,16 @@ export class PhotoProcessService {
     filePath: string,
     scope: 'personal' | 'family',
   ): Promise<ProcessPhotoResult> {
+    let exifDate: string | undefined;
+    let exifLocation: string | undefined;
+    try {
+      const exif = extractExif(filePath);
+      exifDate = exif.date;
+      exifLocation = exif.location;
+    } catch {
+      // no EXIF or unsupported file
+    }
+
     const faces = await detectFaces(filePath);
     const description = await this.imageDescribe.describeFromPath(filePath, true);
     const people = faces.map((f) => f.name).filter((n) => n !== 'unknown');
@@ -32,6 +43,8 @@ export class PhotoProcessService {
       metadata: {
         filePath,
         people: people.length ? people : undefined,
+        date: exifDate,
+        location: exifLocation,
       },
     });
     return {

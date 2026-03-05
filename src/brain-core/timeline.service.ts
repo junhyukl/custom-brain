@@ -10,6 +10,12 @@ export interface TimelineEntry {
   scope: string;
 }
 
+export interface BuildTimelineResult {
+  total: number;
+  withDate: number;
+  byYear: Record<string, number>;
+}
+
 @Injectable()
 export class TimelineService {
   constructor(private readonly mongo: MongoService) {}
@@ -27,5 +33,22 @@ export class TimelineService {
         type: m.type,
         scope: m.scope,
       }));
+  }
+
+  /**
+   * Build timeline stats from all memories (date-aware for photos/documents).
+   * Timeline API (getTimeline) reads from Mongo; this reports counts by year.
+   */
+  async buildTimeline(): Promise<BuildTimelineResult> {
+    const col = this.mongo.getMemoryCollection();
+    const docs = await col.find({}).toArray();
+    const withDate = docs.filter((m) => m.metadata?.date || m.createdAt);
+    const byYear: Record<string, number> = {};
+    for (const m of withDate) {
+      const dateStr = m.metadata?.date ?? m.createdAt?.toISOString?.() ?? '';
+      const year = dateStr.slice(0, 4);
+      if (year) byYear[year] = (byYear[year] ?? 0) + 1;
+    }
+    return { total: docs.length, withDate: withDate.length, byYear };
   }
 }

@@ -80,6 +80,11 @@ export class MemoryService {
     return candidates.filter((m) => m.type === 'photo' || m.type === 'document').slice(0, limit);
   }
 
+  async searchDocuments(query: string, limit = 10): Promise<Memory[]> {
+    const candidates = await this.search(query, limit * 2);
+    return candidates.filter((m) => m.type === 'document').slice(0, limit);
+  }
+
   async recall(limit = 50): Promise<Memory[]> {
     return this.mongo
       .getMemoryCollection()
