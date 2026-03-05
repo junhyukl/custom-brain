@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { LlmClient } from '../llm/llmClient';
-import { MemoryService } from './memory.service';
+import { MemoryService } from '../brain-core/memory.service';
 import { DEFAULT_LLM_MODEL } from '../common/constants';
 
 @Injectable()

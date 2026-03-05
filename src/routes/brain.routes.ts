@@ -20,11 +20,8 @@ export class BrainRoutes {
     this.agentMemory.append('user', body.message);
     const reply = await this.rag.query(body.message);
     this.agentMemory.append('assistant', reply);
-
-    // User/Agent → LLM(reply) → Memory Evaluator → Important? → store | ignore
     const turn = `User: ${body.message}\nAssistant: ${reply}`;
     const { important, stored } = await this.memoryEvaluator.evaluateAndMaybeStore(turn);
-
     return { reply, memory: { important, stored } };
   }
 
@@ -33,7 +30,6 @@ export class BrainRoutes {
     return { messages: this.agentMemory.getMessages() };
   }
 
-  /** askBrain(question): searchMemory → askLLM(context+question) → autoMemory(question+answer) → return answer */
   @Post('ask')
   async ask(@Body() body: AskDto) {
     const answer = await this.askBrain.askBrain(body.question);

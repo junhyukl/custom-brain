@@ -36,14 +36,23 @@ ollama serve
 ollama pull mistral:7b-instruct
 ```
 
-### 3. Qdrant (선택)
+### 3. Qdrant + MongoDB (v2 메모리/타임라인/가족)
 
-장기 메모리/벡터 검색을 쓰려면 [Qdrant](https://qdrant.tech)를 실행하세요. 없어도 앱은 동작하며, 메모리 저장·검색은 스텁으로 남습니다.
+v2 Memory Core(벡터 검색, 타임라인, 가족 그래프)를 쓰려면 Qdrant와 MongoDB가 필요합니다. 기존에 떠 있는 컨테이너가 있으면 재사용하고, 없으면 새로 띄우는 스크립트를 사용할 수 있습니다.
+
+```powershell
+# Windows: Qdrant / Mongo 필요 시에만 컨테이너 생성
+.\docker-up.ps1
+```
+
+또는 직접 Docker Compose (설정 파일은 `docker/` 폴더):
 
 ```bash
-# Docker 예시
-docker run -p 6333:6333 qdrant/qdrant
+docker compose -f docker/docker-compose.yml up -d
 ```
+
+- Qdrant: `http://localhost:6333`
+- MongoDB: `mongodb://localhost:27017`
 
 ### 4. 빌드 및 실행
 
@@ -69,6 +78,19 @@ pnpm run start:prod
 | POST | `/brain/chat` | `{ "message": "..." }` | 채팅 (RAG + 메모리 평가 후 저장) |
 | POST | `/brain/ask` | `{ "question": "..." }` | 질의 (searchMemory → LLM → autoMemory 후 답변 반환) |
 
+### Memory Core API (v2, 벡터 검색)
+
+| Method | Path | Body / Query | 설명 |
+|--------|------|--------------|------|
+| POST | `/brain/memory` | `{ "content", "scope?", "type?", "metadata?", "source?" }` | 메모리 저장 (Qdrant + Mongo) |
+| GET | `/brain/memory/search` | `?q=...&limit=10&scope=personal|family` | 벡터 검색 |
+| GET | `/brain/timeline` | `?scope=&limit=100` | 날짜 기준 타임라인 |
+| GET | `/brain/family/tree` | - | 가족 그래프 |
+| POST | `/brain/family/persons` | `{ "name", "relation", "birthDate?", "description?", "parentIds?" }` | 가족 구성원 추가 |
+| POST | `/brain/photo/analyze` | `{ "image": "base64...", "date?", "source?", "people?" }` | 사진 분석 후 메모리 저장 (Vision) |
+
+검색·타임라인·가족 트리는 **OpenClaw 툴**로도 사용 가능: `search_memory`, `search_photos`, `family_tree`, `timeline`.
+
 ### 예시
 
 ```bash
@@ -83,32 +105,41 @@ curl -X POST http://localhost:3001/brain/ask \
   -d '{"question":"1+1은?"}'
 ```
 
-## 프로젝트 구조
+## 프로젝트 구조 (v2)
 
 ```
-src/
-├── app.ts                 # 앱 생성/부트스트랩
-├── app.module.ts
-├── app.controller.ts      # /, /test, /test/run
-├── app.service.ts
-├── main.ts
-├── test-runner.service.ts # 테스트 러너 UI 및 pnpm run test 실행
-├── common/
-│   └── constants.ts       # DEFAULT_LLM_MODEL 등
-├── brain/
-│   ├── brain.module.ts
-│   ├── memory.service.ts
-│   ├── memoryEvaluator.service.ts   # autoMemory (Important? → store/ignore)
-│   ├── rag.service.ts
-│   ├── askBrain.service.ts
-│   ├── embedding.service.ts
-│   ├── agentMemory.service.ts
-│   └── dto/
-├── routes/
-│   └── brain.routes.ts     # /brain/* 컨트롤러
-├── vector/                # Qdrant 벡터 저장소
-├── llm/                   # Ollama 클라이언트
-└── tools/                 # searchMemory, storeMemory, queryKnowledge
+custom-brain/
+├── brain-data/            # 실제 기억 데이터 (personal / family)
+│   ├── personal/notes, documents, projects
+│   └── family/photos, history, documents
+├── docker/
+│   └── docker-compose.yml # Qdrant + Mongo
+├── scripts/
+│   ├── ingest-folder.ts   # 폴더 스캔 후 API로 수집
+│   └── rebuild-vector.ts  # 벡터 인덱스 재구성
+└── src/
+    ├── api/               # HTTP 컨트롤러
+    │   ├── memory.controller.ts
+    │   ├── search.controller.ts
+    │   ├── timeline.controller.ts
+    │   ├── photo.controller.ts
+    │   └── family.controller.ts
+    ├── agent-tools/       # OpenClaw용 툴 (search_memory, search_photos, timeline, family_tree)
+    ├── brain-core/        # 메모리·검색·타임라인 핵심
+    │   ├── memory.service.ts
+    │   ├── embedding.service.ts
+    │   ├── search.service.ts
+    │   └── timeline.service.ts
+    ├── brain-schema/      # Memory, Person, Event, PhotoMemory 스키마
+    ├── brain/             # 채팅·RAG·가족·자동 메모리 평가
+    ├── config/            # qdrant, ollama, storage 설정
+    ├── ingestion/         # photo, document, email 수집
+    ├── llm/               # Ollama 클라이언트, PromptService
+    ├── storage/           # file.service, path.service (brain-data 경로)
+    ├── vector/            # Qdrant 클라이언트, VectorService
+    ├── vision/            # ImageDescribeService, OcrService
+    ├── mongo/             # MongoDB 연결
+    └── tools/             # 툴 구현 (agent-tools에서 re-export)
 ```
 
 ## 환경 변수
@@ -116,8 +147,13 @@ src/
 | 변수 | 기본값 | 설명 |
 |------|--------|------|
 | `PORT` | `3001` | 서버 포트 |
+| `OLLAMA_URL` | `http://localhost:11434` | Ollama API |
+| `QDRANT_URL` | `http://localhost:6333` | Qdrant API |
+| `MONGO_URL` | `mongodb://localhost:27017` | MongoDB 연결 문자열 |
+| `MONGO_DB_NAME` | `custom_brain` | MongoDB DB 이름 |
+| `VISION_MODEL` | `llava` | 사진 분석용 Vision 모델 (Ollama) |
 
-Ollama는 `http://localhost:11434`, Qdrant는 `http://localhost:6333`를 사용합니다.
+`.env.example`을 참고해 `.env`를 만들 수 있습니다.
 
 ## 테스트
 

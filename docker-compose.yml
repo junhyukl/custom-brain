@@ -1,0 +1,15 @@
+services:
+
+  qdrant:
+    image: qdrant/qdrant
+    container_name: custom-brain-qdrant
+    ports:
+      - "6333:6333"
+    volumes:
+      - ./qdrant_storage:/qdrant/storage
+
+  mongo:
+    image: mongo
+    container_name: custom-brain-mongo
+    ports:
+      - "27017:27017"

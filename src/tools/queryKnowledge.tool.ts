@@ -1,4 +1,5 @@
 import { Injectable } from '@nestjs/common';
+import { RagService } from '../brain/rag.service';
 
 export interface QueryKnowledgeToolInput {
   question: string;
@@ -7,10 +8,11 @@ export interface QueryKnowledgeToolInput {
 @Injectable()
 export class QueryKnowledgeTool {
   name = 'query_knowledge';
-  description = 'Query the knowledge base (RAG)';
+  description = 'Query the knowledge base (RAG: vector search + LLM answer)';
+
+  constructor(private readonly rag: RagService) {}
 
   async execute(input: QueryKnowledgeToolInput): Promise<string> {
-    // TODO: inject RagService and run query
-    return '';
+    return this.rag.query(input.question);
   }
 }

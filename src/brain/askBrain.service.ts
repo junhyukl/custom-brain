@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { MemoryService } from './memory.service';
+import { MemoryService } from '../brain-core/memory.service';
 import { LlmClient } from '../llm/llmClient';
 import { MemoryEvaluatorService } from './memoryEvaluator.service';
 import { DEFAULT_LLM_MODEL } from '../common/constants';
@@ -21,14 +21,10 @@ export class AskBrainService {
 
   async askBrain(question: string): Promise<string> {
     const context = await this.memory.search(question);
-
-    const prompt = `
-Context:
-${JSON.stringify(context)}
-
-Question:
-${question}
-`;
+    const contextText = context.length
+      ? context.map((m) => m.content).join('\n---\n')
+      : '(no relevant memories)';
+    const prompt = `Context:\n${contextText}\n\nQuestion:\n${question}`;
 
     const answer = await this.llm.generate(DEFAULT_LLM_MODEL, prompt);
 
