@@ -35,10 +35,14 @@ export class DocumentProcessService {
     let content: string;
     try {
       content = await extract(filePath);
-    } catch {
+    } catch (err) {
+      console.error('[document.process] extract failed:', path.basename(filePath), err instanceof Error ? err.message : err);
       return null;
     }
-    if (!content || content.length < 2) return null;
+    if (!content || content.length < 2) {
+      console.warn('[document.process] content too short or empty:', path.basename(filePath), 'length=', content?.length ?? 0);
+      return null;
+    }
 
     const memory = await this.memory.store(content.slice(0, 100_000), {
       type: 'document',

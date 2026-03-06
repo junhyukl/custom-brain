@@ -4,6 +4,7 @@ import { toPhotoUrl } from '../utils/photoUrl';
 import { toErrorMessage } from '../utils/request';
 import { API_SEARCH_LIMIT } from '../constants';
 import PhotoModal from './PhotoModal';
+import DocumentModal from './DocumentModal';
 
 export interface MemoryHit {
   id: string;
@@ -24,6 +25,7 @@ export default function Search() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [selectedPhoto, setSelectedPhoto] = useState<MemoryHit | null>(null);
+  const [selectedDocument, setSelectedDocument] = useState<MemoryHit | null>(null);
 
   const handleSearch = async () => {
     if (!query.trim()) return;
@@ -95,15 +97,18 @@ export default function Search() {
         {results.map((r, i) => (
           <div
             key={r.id || i}
-            className={`border border-zinc-700 rounded-lg overflow-hidden bg-zinc-900 flex flex-col ${
-              r.type === 'photo' ? 'cursor-pointer hover:ring-2 hover:ring-blue-500 transition-shadow' : ''
-            }`}
-            onClick={() => r.type === 'photo' && r.metadata?.filePath && setSelectedPhoto(r)}
-            onKeyDown={(e) =>
-              r.type === 'photo' && r.metadata?.filePath && (e.key === 'Enter' || e.key === ' ') && setSelectedPhoto(r)
-            }
-            role={r.type === 'photo' ? 'button' : undefined}
-            tabIndex={r.type === 'photo' ? 0 : undefined}
+            className="border border-zinc-700 rounded-lg overflow-hidden bg-zinc-900 flex flex-col cursor-pointer hover:ring-2 hover:ring-blue-500 transition-shadow"
+            onClick={() => {
+              if (r.type === 'photo' && r.metadata?.filePath) setSelectedPhoto(r);
+              else setSelectedDocument(r);
+            }}
+            onKeyDown={(e) => {
+              if (e.key !== 'Enter' && e.key !== ' ') return;
+              if (r.type === 'photo' && r.metadata?.filePath) setSelectedPhoto(r);
+              else setSelectedDocument(r);
+            }}
+            role="button"
+            tabIndex={0}
           >
             {r.type === 'photo' && r.metadata?.filePath && (
               <img
@@ -145,6 +150,14 @@ export default function Search() {
         onClose={() => setSelectedPhoto(null)}
         onDeleted={(id) => {
           setSelectedPhoto(null);
+          setResults((prev) => prev.filter((r) => r.id !== id));
+        }}
+      />
+      <DocumentModal
+        doc={selectedDocument}
+        onClose={() => setSelectedDocument(null)}
+        onDeleted={(id) => {
+          setSelectedDocument(null);
           setResults((prev) => prev.filter((r) => r.id !== id));
         }}
       />

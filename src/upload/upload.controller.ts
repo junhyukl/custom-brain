@@ -78,7 +78,10 @@ export class UploadController {
       const filePath = await this.upload.saveFile(file.buffer, file.originalname, 'document');
       const result = await this.documentProcess.processDocument(filePath, 'personal');
       if (!result) {
-        return { success: false, error: '지원하지 않는 문서 형식이거나 텍스트 추출에 실패했습니다. (PDF/DOCX/TXT/MD)' };
+        return {
+          success: false,
+          error: '텍스트 추출에 실패했거나 내용이 비어 있습니다. (지원: PDF/DOCX/TXT/MD. 스캔된 PDF는 텍스트 레이어가 없으면 실패할 수 있습니다.)',
+        };
       }
       return {
         success: true,
