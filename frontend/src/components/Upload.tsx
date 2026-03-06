@@ -71,6 +71,7 @@ export default function Upload() {
               ref={photoInputRef}
               type="file"
               accept={PHOTO_ACCEPT}
+              capture="environment"
               className="block w-full text-sm text-zinc-400 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:bg-blue-600 file:text-white file:font-medium file:cursor-pointer hover:file:bg-blue-700"
               onChange={(e) => {
                 const f = e.target.files?.[0];
