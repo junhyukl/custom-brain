@@ -15,6 +15,8 @@ export const MONGO_COLLECTION_MEMORIES = 'memories';
 export const MONGO_COLLECTION_PERSONS = 'persons';
 export const MONGO_COLLECTION_GRAPH_EDGES = 'graph_edges';
 
+/** v2 AI Service (Python): analyze-photo, embed. 있으면 업로드 파이프라인에서 캡션·임베딩을 이 서비스로 요청 */
+export const AI_SERVICE_URL = process.env.AI_SERVICE_URL ?? '';
 /** Face recognition: Python InsightFace service URL. 있으면 사진 업로드 시 이 서비스로 얼굴 임베딩 추출 후 Qdrant faces 매칭/등록 */
 export const FACE_SERVICE_URL = process.env.FACE_SERVICE_URL ?? '';
 /** Qdrant 얼굴 벡터 컬렉션 (InsightFace 512차원) */
@@ -28,6 +30,10 @@ export const OLLAMA_URL = process.env.OLLAMA_URL ?? 'http://localhost:11434';
 export const QDRANT_URL = process.env.QDRANT_URL ?? 'http://localhost:6333';
 export const MONGO_URL = process.env.MONGO_URL ?? 'mongodb://localhost:27017';
 export const MONGO_DB_NAME = process.env.MONGO_DB_NAME ?? 'custom_brain';
+/** v2 Graph DB (선택): 설정 시 Family Graph를 Neo4j에도 동기화 */
+export const NEO4J_URI = process.env.NEO4J_URI ?? '';
+export const NEO4J_USER = process.env.NEO4J_USER ?? 'neo4j';
+export const NEO4J_PASSWORD = process.env.NEO4J_PASSWORD ?? '';
 export const VISION_MODEL = process.env.VISION_MODEL ?? 'llava';
 
 /** Supported photo extensions for ingestion */

@@ -36,6 +36,21 @@ export class TimelineService {
   }
 
   /**
+   * v2: 이벤트 텍스트를 메모리로 저장해 타임라인에 반영 (업로드 파이프라인에서 호출).
+   */
+  async addEvent(text: string, scope: MemoryScope = 'personal'): Promise<void> {
+    const col = this.mongo.getMemoryCollection();
+    await col.insertOne({
+      id: `timeline_${Date.now()}_${Math.random().toString(36).slice(2, 9)}`,
+      scope,
+      type: 'event',
+      content: text,
+      metadata: {},
+      createdAt: new Date(),
+    });
+  }
+
+  /**
    * Build timeline stats from all memories (date-aware for photos/documents).
    * Timeline API (getTimeline) reads from Mongo; this reports counts by year.
    */

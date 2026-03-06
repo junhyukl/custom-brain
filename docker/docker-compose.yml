@@ -12,3 +12,26 @@ services:
     container_name: custom-brain-mongo
     ports:
       - "27017:27017"
+
+  # v2 AI Service (Python): analyze-photo, embed. Ollama는 호스트에서 실행 가정 (OLLAMA_HOST=http://host.docker.internal:11434)
+  ai-service:
+    build:
+      context: ../ai-service
+      dockerfile: Dockerfile
+    container_name: custom-brain-ai-service
+    ports:
+      - "8000:8000"
+    environment:
+      - OLLAMA_HOST=http://host.docker.internal:11434
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+
+  # v2 Graph DB (선택). NEO4J_URI=bolt://localhost:7687 로 Nest 연결
+  neo4j:
+    image: neo4j:5
+    container_name: custom-brain-neo4j
+    ports:
+      - "7474:7474"
+      - "7687:7687"
+    environment:
+      - NEO4J_AUTH=neo4j/custom-brain-neo4j

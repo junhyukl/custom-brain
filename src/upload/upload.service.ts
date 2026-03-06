@@ -27,7 +27,14 @@ export class UploadService {
         `지원하지 않는 문서 형식입니다. ${ALLOWED_DOC_EXT_MSG}`,
       );
     }
-    const safeExt = type === 'photo' && PHOTO_EXT_REGEX.test(ext) ? ext : type === 'document' ? ext : type === 'photo' ? '.jpg' : '.txt';
+    const safeExt =
+      type === 'photo' && PHOTO_EXT_REGEX.test(ext)
+        ? ext
+        : type === 'document'
+          ? ext
+          : type === 'photo'
+            ? '.jpg'
+            : '.txt';
     const name = `${Date.now()}-${Math.random().toString(36).slice(2, 10)}${safeExt}`;
     const filePath = path.join(dir, name);
     await fs.writeFile(filePath, buffer);

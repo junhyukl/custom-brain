@@ -5,7 +5,10 @@ import { FaceService } from '../vision/face.service';
 import { ImageDescribeService } from '../vision/image.describe';
 import { extractExif } from '../vision/photo.metadata';
 import { MemoryService } from '../brain-core/memory.service';
+import { TimelineService } from '../brain-core/timeline.service';
 import { FamilyService } from '../brain/family.service';
+import { FamilyGraphService } from '../neo4j/family-graph.service';
+import { AiServiceClient } from '../ai-service/ai-service.client';
 
 export interface ProcessPhotoResult {
   memoryId: string;
@@ -25,9 +28,55 @@ export class PhotoProcessService {
     private readonly memory: MemoryService,
     private readonly faceService: FaceService,
     private readonly familyService: FamilyService,
+    private readonly timelineService: TimelineService,
+    private readonly aiService: AiServiceClient,
+    private readonly familyGraphService: FamilyGraphService,
   ) {}
 
   async processPhoto(
+    filePath: string,
+    scope: 'personal' | 'family',
+  ): Promise<ProcessPhotoResult> {
+    // v2: AI Service 사용 시 캡션·임베딩을 Python 서비스에서 한 번에 받아 저장
+    if (this.aiService.isAvailable()) {
+      return this.processPhotoViaAiService(filePath, scope);
+    }
+    return this.processPhotoLegacy(filePath, scope);
+  }
+
+  private async processPhotoViaAiService(
+    filePath: string,
+    scope: 'personal' | 'family',
+  ): Promise<ProcessPhotoResult> {
+    const ai = await this.aiService.analyzePhoto(filePath);
+    const caption = ai.caption || 'Photo (no caption)';
+    const people = ai.people || [];
+    const embedding = ai.embedding?.length ? ai.embedding : undefined;
+
+    await this.familyService.updatePeople(people);
+    await this.familyGraphService.updatePeople(people);
+    const memory = embedding?.length
+      ? await this.memory.storeWithVector(caption, embedding, {
+          type: 'photo',
+          scope,
+          metadata: { filePath, people: people.length ? people : undefined },
+        })
+      : await this.memory.store(caption, {
+          type: 'photo',
+          scope,
+          metadata: { filePath, people: people.length ? people : undefined },
+        });
+    await this.timelineService.addEvent(caption, scope);
+
+    return {
+      memoryId: memory.id,
+      description: caption,
+      faces: people.map((name) => ({ name, confidence: 1 })),
+      personIds: undefined,
+    };
+  }
+
+  private async processPhotoLegacy(
     filePath: string,
     scope: 'personal' | 'family',
   ): Promise<ProcessPhotoResult> {

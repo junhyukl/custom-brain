@@ -1,4 +1,4 @@
-import { Controller, Get, Query } from '@nestjs/common';
+import { Body, Controller, Get, Post, Query } from '@nestjs/common';
 import { SearchService } from '../brain-core/search.service';
 import { toErrorMessage } from '../common/error.util';
 import { DEFAULT_SEARCH_LIMIT, parseLimit } from '../common/constants';
@@ -30,6 +30,19 @@ export class SearchController {
   ): Promise<{ results: Memory[]; error?: string }> {
     return this.handleSearch('brain/memory/search', () =>
       this.searchService.search(q ?? '', parseLimit(limit, DEFAULT_SEARCH_LIMIT), scope),
+    );
+  }
+
+  /** v2: POST 검색 (쿼리 임베딩 후 벡터 검색). body: { query: string, limit?: number } */
+  @Post('search')
+  async searchPost(
+    @Body() body: { query?: string; limit?: number },
+  ): Promise<{ results: Memory[]; error?: string }> {
+    return this.handleSearch('brain/search', () =>
+      this.searchService.search(
+        body.query ?? '',
+        parseLimit(String(body.limit), DEFAULT_SEARCH_LIMIT),
+      ),
     );
   }
 

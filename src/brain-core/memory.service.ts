@@ -95,6 +95,45 @@ export class MemoryService {
     return doc;
   }
 
+  /**
+   * v2: 외부에서 이미 계산한 벡터로 메모리 저장 (예: AI Service에서 caption + embedding 반환 시).
+   * vector 길이가 0이면 zeroVector 사용.
+   */
+  async storeWithVector(
+    content: string,
+    vector: number[],
+    options: {
+      scope?: MemoryScope;
+      type?: MemoryType;
+      metadata?: MemoryMetadata;
+      source?: string;
+    } = {},
+  ): Promise<Memory> {
+    await this.ensureCollection();
+    const scope = options.scope ?? 'personal';
+    const type = options.type ?? 'note';
+    const metadata: MemoryMetadata = {
+      ...options.metadata,
+      ...(options.source ? { source: options.source } : {}),
+    };
+    const id = randomUUID();
+    const createdAt = new Date();
+    const doc: Memory = {
+      id,
+      scope,
+      type,
+      content,
+      metadata,
+      createdAt,
+    };
+    await this.mongo.getMemoryCollection().insertOne(doc);
+    const vec = vector?.length ? vector : zeroVector();
+    await this.vector.upsert(COLLECTION_MEMORY, [
+      { id, vector: vec, payload: { type, scope, content: content.slice(0, 500) } },
+    ]);
+    return doc;
+  }
+
   async search(query: string, limit = 10, scope?: MemoryScope): Promise<Memory[]> {
     await this.ensureCollection();
     const vector = await this.embedding.embed(query);

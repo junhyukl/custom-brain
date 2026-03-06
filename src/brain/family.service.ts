@@ -112,4 +112,15 @@ export class FamilyService {
   async findPersonByName(name: string): Promise<Person | null> {
     return this.mongo.getPersonCollection().findOne({ name });
   }
+
+  /** v2: 이름 목록으로 Person 노드 보장 (없으면 생성). AI 분석 결과 people 연동용. */
+  async updatePeople(people: string[]): Promise<void> {
+    for (const name of people) {
+      if (!name?.trim()) continue;
+      const existing = await this.findPersonByName(name.trim());
+      if (!existing) {
+        await this.createPerson({ name: name.trim(), relation: 'child' });
+      }
+    }
+  }
 }
