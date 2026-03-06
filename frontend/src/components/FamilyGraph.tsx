@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import axios from 'axios';
 import ForceGraph2D from 'react-force-graph-2d';
 
@@ -44,6 +44,22 @@ export default function FamilyGraph() {
   const [data, setData] = useState<{ nodes: GraphNode[]; links: GraphLink[] }>({ nodes: [], links: [] });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
+  const [size, setSize] = useState({ width: 800, height: 500 });
+
+  useEffect(() => {
+    const el = containerRef.current;
+    if (!el) return;
+    const update = () => {
+      const w = el.offsetWidth || 800;
+      const h = el.offsetHeight || 500;
+      setSize({ width: Math.max(300, w), height: Math.max(400, h) });
+    };
+    update();
+    const ro = new ResizeObserver(update);
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, [data.nodes.length]);
 
   useEffect(() => {
     axios
@@ -76,17 +92,23 @@ export default function FamilyGraph() {
       )}
 
       {!loading && !error && data.nodes.length > 0 && (
-        <div className="border border-zinc-700 rounded-lg overflow-hidden bg-zinc-900">
-          <ForceGraph2D
-            graphData={data}
-            nodeId="id"
-            nodeLabel={(n) => `${(n as GraphNode).name} (${(n as GraphNode).relation ?? ''})`}
-            nodeAutoColorBy="relation"
-            linkDirectionalArrowLength={4}
-            linkDirectionalArrowRelPos={1}
-            width={800}
-            height={500}
-          />
+        <div className="overflow-x-auto">
+          <div
+            ref={containerRef}
+            className="w-full border border-zinc-700 rounded-lg overflow-hidden bg-zinc-900"
+            style={{ minHeight: 400 }}
+          >
+            <ForceGraph2D
+              graphData={data}
+              nodeId="id"
+              nodeLabel={(n) => `${(n as GraphNode).name} (${(n as GraphNode).relation ?? ''})`}
+              nodeAutoColorBy="relation"
+              linkDirectionalArrowLength={4}
+              linkDirectionalArrowRelPos={1}
+              width={size.width}
+              height={size.height}
+            />
+          </div>
         </div>
       )}
     </section>

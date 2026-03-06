@@ -1,17 +1,19 @@
 import Search from './components/Search';
 import Timeline from './components/Timeline';
 import FamilyGraph from './components/FamilyGraph';
+import Upload from './components/Upload';
 
 /**
- * Full UI: 검색 → 결과 → Timeline → 가족 그래프 한 페이지에 통합.
- * Backend: /brain/photos|documents|memory/search, /brain/timeline, /brain/family/tree
+ * Full UI: 업로드 → 검색 → Timeline → Family Graph.
+ * Backend: /brain/upload/photo, /brain/upload/document, /brain/* search/timeline/family
  */
 function App() {
   return (
-    <div className="app max-w-7xl mx-auto p-4 pb-12">
+    <div className="app max-w-7xl mx-auto px-4 py-4 pb-12 sm:p-6">
       <h1 className="text-2xl font-bold mb-1">Personal + Family AI</h1>
-      <p className="text-zinc-400 text-sm mb-6">검색 · Timeline · Family Graph</p>
+      <p className="text-zinc-400 text-sm mb-6">업로드 · 검색 · Timeline · Family Graph</p>
 
+      <Upload />
       <Search />
       <Timeline />
       <FamilyGraph />

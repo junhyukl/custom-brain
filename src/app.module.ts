@@ -12,6 +12,7 @@ import { BrainModule } from './brain/brain.module';
 import { IngestionModule } from './ingestion/ingestion.module';
 import { ApiModule } from './api/api.module';
 import { ToolsModule } from './tools/tools.module';
+import { UploadModule } from './upload/upload.module';
 
 @Module({
   imports: [
@@ -25,6 +26,7 @@ import { ToolsModule } from './tools/tools.module';
     IngestionModule,
     ApiModule,
     ToolsModule,
+    UploadModule,
   ],
   controllers: [AppController],
   providers: [AppService, TestRunnerService],

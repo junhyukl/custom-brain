@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import axios from 'axios';
 import { toPhotoUrl } from '../utils/photoUrl';
+import PhotoModal from './PhotoModal';
 
 export interface MemoryHit {
   id: string;
@@ -10,6 +11,7 @@ export interface MemoryHit {
     filePath?: string;
     people?: string[];
     date?: string;
+    location?: string;
   };
 }
 
@@ -19,6 +21,7 @@ export default function Search() {
   const [mode, setMode] = useState<'photos' | 'documents' | 'memory'>('photos');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [selectedPhoto, setSelectedPhoto] = useState<MemoryHit | null>(null);
 
   const handleSearch = async () => {
     if (!query.trim()) return;
@@ -86,9 +89,20 @@ export default function Search() {
 
       {error && <p className="text-red-400 text-sm mb-2">{error}</p>}
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mt-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 mt-4">
         {results.map((r, i) => (
-          <div key={r.id || i} className="border border-zinc-700 rounded-lg overflow-hidden bg-zinc-900 flex flex-col">
+          <div
+            key={r.id || i}
+            className={`border border-zinc-700 rounded-lg overflow-hidden bg-zinc-900 flex flex-col ${
+              r.type === 'photo' ? 'cursor-pointer hover:ring-2 hover:ring-blue-500 transition-shadow' : ''
+            }`}
+            onClick={() => r.type === 'photo' && r.metadata?.filePath && setSelectedPhoto(r)}
+            onKeyDown={(e) =>
+              r.type === 'photo' && r.metadata?.filePath && (e.key === 'Enter' || e.key === ' ') && setSelectedPhoto(r)
+            }
+            role={r.type === 'photo' ? 'button' : undefined}
+            tabIndex={r.type === 'photo' ? 0 : undefined}
+          >
             {r.type === 'photo' && r.metadata?.filePath && (
               <img
                 src={toPhotoUrl(r.metadata.filePath)}
@@ -123,6 +137,8 @@ export default function Search() {
           검색 결과가 없습니다. pnpm run ingest-all 로 데이터를 수집하세요.
         </p>
       )}
+
+      <PhotoModal photo={selectedPhoto} onClose={() => setSelectedPhoto(null)} />
     </section>
   );
 }

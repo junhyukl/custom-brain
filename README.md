@@ -183,11 +183,12 @@ pnpm -C frontend install
 pnpm run dev:ui
 ```
 
-- 브라우저에서 **http://localhost:5173** 접속. **Full UI** 한 페이지에 검색 → Timeline → Family Graph가 모두 표시됩니다.
-- **검색**: 사진/문서/메모리 탭으로 검색. 사진 썸네일·문서 요약 표시. (Backend: `/brain/photos|documents|memory/search`)
+- 브라우저에서 **http://localhost:5173** 접속. **Full UI** 한 페이지에 **업로드 → 검색 → Timeline → Family Graph**가 모두 표시됩니다.
+- **업로드**: 사진(JPG/PNG/WebP) 또는 문서(PDF/DOCX/TXT/MD)를 선택하면 Backend가 저장 후 EXIF/텍스트 추출 → Embedding → Qdrant·Mongo 저장. 이후 검색·Timeline에 자동 반영. (Backend: `POST /api/upload/photo`, `POST /api/upload/document`, multipart field `file`)
+- **검색**: 사진/문서/메모리 탭으로 검색. 사진 클릭 시 확대 모달 + EXIF/GPS. (Backend: `/brain/photos|documents|memory/search`)
 - **Timeline**: 연도별 이벤트 목록. (Backend: `/brain/timeline`)
 - **Family Graph**: 가족 관계 Force-directed 2D 그래프. (Backend: `/brain/family/tree`)
-- 스택: React + Tailwind CSS + react-force-graph-2d. 이미지는 `/brain-data` 로 서빙.
+- 스택: React + Tailwind CSS + react-force-graph-2d. 모바일에서도 업로드·검색 가능.
 
 ---
 
@@ -378,6 +379,8 @@ curl http://localhost:3001/brain/family/tree
 | GET | `/brain/family/tree` | - | 가족 그래프 |
 | POST | `/brain/family/persons` | `{ "name", "relation", "birthDate?", "description?", "parentIds?" }` | 가족 구성원 추가 |
 | POST | `/brain/photo/analyze` | `{ "image": "base64...", "date?", "source?", "people?" }` | 사진 분석 후 메모리 저장 (Vision) |
+| POST | `/api/upload/photo` | multipart `file` (이미지) | 업로드 → 저장·EXIF·Vision·Embedding·Qdrant |
+| POST | `/api/upload/document` | multipart `file` (PDF/DOCX/TXT/MD) | 업로드 → 텍스트 추출·Embedding·Qdrant |
 
 검색·타임라인·가족 트리는 **OpenClaw 툴**로도 사용 가능: `search_memory`, `search_photos`, `family_tree`, `timeline`.
 

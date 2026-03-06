@@ -1,6 +1,5 @@
 import { Injectable } from '@nestjs/common';
 import fs from 'fs/promises';
-import path from 'path';
 import { LlmClient } from '../llm/llmClient';
 import { VISION_MODEL } from '../common/constants';
 

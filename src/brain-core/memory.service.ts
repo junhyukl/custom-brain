@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { ObjectId } from 'mongodb';
+import { randomUUID } from 'crypto';
 import { MongoService } from '../mongo/mongo.service';
 import { VectorStore } from '../vector/vectorStore';
 import { EmbeddingService } from './embedding.service';
@@ -38,7 +38,7 @@ export class MemoryService {
       ...options.metadata,
       ...(options.source ? { source: options.source } : {}),
     };
-    const id = new ObjectId().toHexString();
+    const id = randomUUID();
     const createdAt = new Date();
     const embedding = await this.embedding.embed(content);
     const doc: Memory = {

@@ -58,7 +58,8 @@ export default function Timeline() {
       )}
 
       {!loading && !error && years.length > 0 && (
-        <div className="space-y-6 max-w-3xl">
+        <div className="overflow-x-auto">
+          <div className="space-y-6 max-w-3xl min-w-0">
           {years.map((year) => (
             <div key={year} className="border-l-2 border-blue-600 pl-4">
               <h3 className="text-sm font-bold text-blue-500 mb-2">{year}</h3>
@@ -78,6 +79,7 @@ export default function Timeline() {
               </div>
             </div>
           ))}
+          </div>
         </div>
       )}
     </section>
