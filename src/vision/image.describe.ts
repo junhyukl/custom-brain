@@ -2,6 +2,7 @@ import { Injectable } from '@nestjs/common';
 import fs from 'fs/promises';
 import { LlmClient } from '../llm/llmClient';
 import { VISION_MODEL } from '../common/constants';
+import { resizeForVision } from './image.resize';
 
 const DEFAULT_PROMPT =
   'Describe this photo for a family memory in one or two sentences. Include: place, approximate year if visible, and who or what is in the photo. Use simple language.';
@@ -18,10 +19,11 @@ export class ImageDescribeService {
     return text.trim() || 'Photo (no description generated)';
   }
 
-  /** Read image from file path, then describe (Vision AI). */
+  /** Read image, resize for Vision API limit, then describe. */
   async describeFromPath(filePath: string, useDetailPrompt = false): Promise<string> {
     const buf = await fs.readFile(filePath);
-    const base64 = buf.toString('base64');
+    const resized = await resizeForVision(buf);
+    const base64 = resized.toString('base64');
     const prompt = useDetailPrompt ? DETAIL_PROMPT : DEFAULT_PROMPT;
     return this.describe(base64, prompt);
   }

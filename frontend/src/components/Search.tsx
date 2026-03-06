@@ -138,7 +138,14 @@ export default function Search() {
         </p>
       )}
 
-      <PhotoModal photo={selectedPhoto} onClose={() => setSelectedPhoto(null)} />
+      <PhotoModal
+        photo={selectedPhoto}
+        onClose={() => setSelectedPhoto(null)}
+        onDeleted={(id) => {
+          setSelectedPhoto(null);
+          setResults((prev) => prev.filter((r) => r.id !== id));
+        }}
+      />
     </section>
   );
 }

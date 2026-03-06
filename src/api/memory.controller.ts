@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Post, Query } from '@nestjs/common';
+import { Body, Controller, Delete, Get, Param, Post, Query } from '@nestjs/common';
 import { MemoryService } from '../brain-core/memory.service';
 import { CreateMemoryDto } from '../brain/dto';
 import type { Memory } from '../brain-schema';
@@ -21,5 +21,21 @@ export class MemoryController {
   async recall(@Query('limit') limit?: string): Promise<{ memories: Memory[] }> {
     const list = await this.memory.recall(limit ? Number(limit) : 50);
     return { memories: list };
+  }
+
+  @Get('memory/:id')
+  async getById(@Param('id') id: string): Promise<Memory | null> {
+    return this.memory.getById(id);
+  }
+
+  @Delete('memory/:id')
+  async delete(@Param('id') id: string): Promise<{ deleted: boolean; error?: string }> {
+    return this.memory.delete(id);
+  }
+
+  /** 타임라인(메모리) 전부 비우기. Mongo + Qdrant 컬렉션 삭제. */
+  @Delete('memories/clear')
+  async clearAll(): Promise<{ mongoDeleted: number }> {
+    return this.memory.clearAll();
   }
 }

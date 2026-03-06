@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import axios from 'axios';
 
 export interface TimelineEntry {
@@ -7,6 +7,15 @@ export interface TimelineEntry {
   memoryId: string;
   type: string;
   scope: string;
+}
+
+interface MemoryDetail {
+  id: string;
+  content: string;
+  type: string;
+  scope: string;
+  metadata: { date?: string; filePath?: string; people?: string[] };
+  createdAt: string;
 }
 
 function groupByYear(events: TimelineEntry[]): Map<string, TimelineEntry[]> {
@@ -22,24 +31,73 @@ function groupByYear(events: TimelineEntry[]): Map<string, TimelineEntry[]> {
   return byYear;
 }
 
+async function fetchTimeline(): Promise<TimelineEntry[]> {
+  const res = await axios.get<{ timeline: TimelineEntry[]; error?: string }>('/brain/timeline', {
+    params: { limit: 200 },
+  });
+  if (res.data.error) throw new Error(res.data.error);
+  return res.data.timeline ?? [];
+}
+
 export default function Timeline() {
   const [events, setEvents] = useState<TimelineEntry[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [selectedMemoryId, setSelectedMemoryId] = useState<string | null>(null);
+  const [detail, setDetail] = useState<MemoryDetail | null>(null);
+  const [detailLoading, setDetailLoading] = useState(false);
+  const [deleteLoading, setDeleteLoading] = useState(false);
 
-  useEffect(() => {
-    axios
-      .get<{ timeline: TimelineEntry[]; error?: string }>('/brain/timeline', { params: { limit: 200 } })
-      .then((res) => {
-        setEvents(res.data.timeline ?? []);
-        setError(res.data.error ?? null);
-      })
-      .catch((err) => {
-        setEvents([]);
-        setError(err instanceof Error ? err.message : '타임라인 로드 실패');
-      })
+  const loadTimeline = useCallback(() => {
+    setLoading(true);
+    fetchTimeline()
+      .then(setEvents)
+      .catch((err) => setError(err instanceof Error ? err.message : '타임라인 로드 실패'))
       .finally(() => setLoading(false));
   }, []);
+
+  useEffect(() => {
+    loadTimeline();
+  }, [loadTimeline]);
+
+  useEffect(() => {
+    const onMemoryDeleted = () => loadTimeline();
+    window.addEventListener('memory-deleted', onMemoryDeleted);
+    return () => window.removeEventListener('memory-deleted', onMemoryDeleted);
+  }, [loadTimeline]);
+
+  useEffect(() => {
+    if (!selectedMemoryId) {
+      setDetail(null);
+      return;
+    }
+    setDetailLoading(true);
+    axios
+      .get<MemoryDetail | null>(`/brain/memory/${selectedMemoryId}`)
+      .then((res) => setDetail(res.data ?? null))
+      .catch(() => setDetail(null))
+      .finally(() => setDetailLoading(false));
+  }, [selectedMemoryId]);
+
+  const handleDelete = useCallback(() => {
+    const id = detail?.id ?? selectedMemoryId;
+    if (!id || deleteLoading) return;
+    if (!confirm('이 메모리와 연결된 파일·벡터 데이터를 모두 삭제합니다. 계속할까요?')) return;
+    setDeleteLoading(true);
+    axios
+      .delete<{ deleted: boolean; error?: string }>(`/brain/memory/${id}`)
+      .then((res) => {
+        if (res.data?.deleted) {
+          setSelectedMemoryId(null);
+          setDetail(null);
+          loadTimeline();
+        } else {
+          alert(res.data?.error ?? '삭제에 실패했습니다.');
+        }
+      })
+      .catch(() => alert('삭제 요청 중 오류가 발생했습니다.'))
+      .finally(() => setDeleteLoading(false));
+  }, [detail?.id, selectedMemoryId, deleteLoading, loadTimeline]);
 
   const byYear = groupByYear(events);
   const years = Array.from(byYear.keys()).sort((a, b) =>
@@ -49,7 +107,7 @@ export default function Timeline() {
   return (
     <section className="p-4 border-b border-zinc-800">
       <h2 className="text-xl font-bold mb-2">Timeline</h2>
-      <p className="text-zinc-400 text-sm mb-4">연도별 이벤트·사진·메모</p>
+      <p className="text-zinc-400 text-sm mb-4">연도별 이벤트·사진·메모 (클릭 시 상세·삭제)</p>
 
       {loading && <p className="text-zinc-500 text-sm py-4">타임라인 불러오는 중…</p>}
       {error && <p className="text-red-400 text-sm py-2">{error}</p>}
@@ -65,20 +123,74 @@ export default function Timeline() {
               <h3 className="text-sm font-bold text-blue-500 mb-2">{year}</h3>
               <div className="space-y-2">
                 {(byYear.get(year) ?? []).map((e, i) => (
-                  <div
+                  <button
+                    type="button"
                     key={e.memoryId || i}
-                    className="border border-zinc-700 rounded-lg p-3 bg-zinc-900"
+                    onClick={() => setSelectedMemoryId(e.memoryId)}
+                    className="w-full text-left border border-zinc-700 rounded-lg p-3 bg-zinc-900 hover:bg-zinc-800 transition-colors"
                   >
                     <div className="text-xs font-medium text-zinc-500">{e.date}</div>
                     <div className="text-sm text-zinc-300 mt-0.5">{e.description}</div>
                     <div className="text-xs text-zinc-500 mt-1">
                       {e.type} · {e.scope}
                     </div>
-                  </div>
+                  </button>
                 ))}
               </div>
             </div>
           ))}
+          </div>
+        </div>
+      )}
+
+      {selectedMemoryId && (
+        <div className="fixed inset-0 z-10 flex items-center justify-center bg-black/70 p-4" onClick={() => setSelectedMemoryId(null)}>
+          <div
+            className="bg-zinc-900 border border-zinc-700 rounded-xl max-w-lg w-full max-h-[85vh] shadow-xl flex flex-col"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex justify-between items-center p-4 border-b border-zinc-700 shrink-0">
+              <h3 className="text-lg font-bold">상세</h3>
+              <button
+                type="button"
+                onClick={() => setSelectedMemoryId(null)}
+                className="text-zinc-400 hover:text-white p-1"
+                aria-label="닫기"
+              >
+                ✕
+              </button>
+            </div>
+            <div className="p-4 overflow-y-auto min-h-0 flex-1">
+              {detailLoading && <p className="text-zinc-500 text-sm py-4">불러오는 중…</p>}
+              {!detailLoading && detail && (
+                <>
+                  <div className="text-xs font-medium text-zinc-500">
+                    {detail.metadata?.date ?? (typeof detail.createdAt === 'string' ? detail.createdAt.slice(0, 10) : '')} · {detail.type} · {detail.scope}
+                  </div>
+                  <p className="text-zinc-300 text-sm mt-2 whitespace-pre-wrap">{detail.content}</p>
+                </>
+              )}
+              {!detailLoading && !detail && (
+                <p className="text-zinc-500 text-sm">메모리를 불러올 수 없습니다. 아래에서 삭제는 가능합니다.</p>
+              )}
+            </div>
+            <div className="p-4 border-t border-zinc-700 flex justify-end gap-2 shrink-0 bg-zinc-900 rounded-b-xl">
+              <button
+                type="button"
+                onClick={() => setSelectedMemoryId(null)}
+                className="px-4 py-2 rounded-lg border border-zinc-600 text-zinc-300 hover:bg-zinc-800"
+              >
+                닫기
+              </button>
+              <button
+                type="button"
+                onClick={handleDelete}
+                disabled={deleteLoading}
+                className="px-4 py-2 rounded-lg bg-red-600 text-white hover:bg-red-500 disabled:opacity-50"
+              >
+                {deleteLoading ? '삭제 중…' : '삭제'}
+              </button>
+            </div>
           </div>
         </div>
       )}

@@ -1,13 +1,17 @@
-import { useEffect, useCallback } from 'react';
+import { useEffect, useCallback, useState } from 'react';
+import axios from 'axios';
 import { toPhotoUrl } from '../utils/photoUrl';
 import type { MemoryHit } from './Search';
 
 type PhotoModalProps = {
   photo: MemoryHit | null;
   onClose: () => void;
+  onDeleted?: (id: string) => void;
 };
 
-export default function PhotoModal({ photo, onClose }: PhotoModalProps) {
+export default function PhotoModal({ photo, onClose, onDeleted }: PhotoModalProps) {
+  const [deleteLoading, setDeleteLoading] = useState(false);
+
   const handleEscape = useCallback(
     (e: KeyboardEvent) => {
       if (e.key === 'Escape') onClose();
@@ -24,6 +28,25 @@ export default function PhotoModal({ photo, onClose }: PhotoModalProps) {
       window.removeEventListener('keydown', handleEscape);
     };
   }, [photo, handleEscape]);
+
+  const handleDelete = useCallback(() => {
+    if (!photo?.id || deleteLoading) return;
+    if (!confirm('이 사진과 연결된 파일·벡터·메모리를 모두 삭제합니다. 계속할까요?')) return;
+    setDeleteLoading(true);
+    axios
+      .delete<{ deleted: boolean; error?: string }>(`/brain/memory/${photo.id}`)
+      .then((res) => {
+        if (res.data?.deleted) {
+          onDeleted?.(photo.id);
+          window.dispatchEvent(new CustomEvent('memory-deleted', { detail: { id: photo.id } }));
+          onClose();
+        } else {
+          alert(res.data?.error ?? '삭제에 실패했습니다.');
+        }
+      })
+      .catch(() => alert('삭제 요청 중 오류가 발생했습니다.'))
+      .finally(() => setDeleteLoading(false));
+  }, [photo?.id, deleteLoading, onClose, onDeleted]);
 
   if (!photo || !photo.metadata?.filePath) return null;
 
@@ -89,6 +112,24 @@ export default function PhotoModal({ photo, onClose }: PhotoModalProps) {
 
           <div className="text-xs text-zinc-500 truncate" title={photo.metadata.filePath}>
             {photo.metadata.filePath.split(/[/\\]/).pop()}
+          </div>
+
+          <div className="pt-3 border-t border-zinc-700 flex justify-end gap-2">
+            <button
+              type="button"
+              onClick={onClose}
+              className="px-4 py-2 rounded-lg border border-zinc-600 text-zinc-300 hover:bg-zinc-800"
+            >
+              닫기
+            </button>
+            <button
+              type="button"
+              onClick={handleDelete}
+              disabled={deleteLoading}
+              className="px-4 py-2 rounded-lg bg-red-600 text-white hover:bg-red-500 disabled:opacity-50"
+            >
+              {deleteLoading ? '삭제 중…' : '삭제'}
+            </button>
           </div>
         </div>
       </div>

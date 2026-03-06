@@ -46,8 +46,12 @@ export class UploadController {
       const result = await this.photoProcess.processPhoto(filePath, 'personal');
       return { success: true, memoryId: result.memoryId, filePath: path.basename(filePath) };
     } catch (err) {
-      const message = toErrorMessage(err);
+      let message = toErrorMessage(err);
       console.error('[brain/upload/photo] fileSize=%s', fileSize, err instanceof Error ? err.stack : message);
+      if (message === 'Request failed with status code 400') {
+        message =
+          '서버 내부 400 (Ollama 이미지/임베딩 또는 Qdrant). pnpm run clear-timeline 후 재시도하거나, Ollama(llava·nomic-embed-text) 및 Qdrant 상태를 확인하세요.';
+      }
       return { success: false, error: message };
     }
   }

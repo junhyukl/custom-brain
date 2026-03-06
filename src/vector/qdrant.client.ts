@@ -21,6 +21,15 @@ export class QdrantClient extends VectorStore {
     }
   }
 
+  async deleteCollection(collection: string): Promise<void> {
+    try {
+      await axios.delete(`${QDRANT_URL}/collections/${collection}`);
+    } catch (err) {
+      if (axios.isAxiosError(err) && err.response?.status === 404) return;
+      throw err;
+    }
+  }
+
   async upsert(
     collection: string,
     points: Array<{ id: string; vector: number[]; payload?: Record<string, unknown> }>,
@@ -33,6 +42,11 @@ export class QdrantClient extends VectorStore {
         payload: p.payload ?? {},
       })),
     });
+  }
+
+  async delete(collection: string, ids: string[]): Promise<void> {
+    if (!ids.length) return;
+    await this.client.delete(collection, { wait: true, points: ids });
   }
 
   async search(

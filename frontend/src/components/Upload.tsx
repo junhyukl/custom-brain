@@ -24,7 +24,7 @@ export default function Upload() {
       const res = await axios.post<{ success: boolean; memoryId?: string; error?: string; filePath?: string; contentLength?: number }>(
         endpoint,
         formData,
-        { headers: { 'Content-Type': 'multipart/form-data' } },
+        { headers: {} },
       );
       if (res.data.success) {
         setMessage({
