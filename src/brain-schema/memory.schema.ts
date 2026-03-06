@@ -4,6 +4,7 @@ export type MemoryType = 'note' | 'document' | 'photo' | 'event' | 'conversation
 
 export interface MemoryMetadata {
   people?: string[];
+  personIds?: string[];
   location?: string;
   date?: string;
   source?: string;

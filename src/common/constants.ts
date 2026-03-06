@@ -13,6 +13,15 @@ export const COLLECTION_MEMORY = 'memories';
 /** Mongo 컬렉션명 */
 export const MONGO_COLLECTION_MEMORIES = 'memories';
 export const MONGO_COLLECTION_PERSONS = 'persons';
+export const MONGO_COLLECTION_GRAPH_EDGES = 'graph_edges';
+
+/** Face recognition: Python InsightFace service URL. 있으면 사진 업로드 시 이 서비스로 얼굴 임베딩 추출 후 Qdrant faces 매칭/등록 */
+export const FACE_SERVICE_URL = process.env.FACE_SERVICE_URL ?? '';
+/** Qdrant 얼굴 벡터 컬렉션 (InsightFace 512차원) */
+export const COLLECTION_FACES = 'faces';
+export const FACE_EMBEDDING_DIMENSION = 512;
+/** 얼굴 매칭 시 동일인 판정 임계값 (이상이면 기존 인물로 인식) */
+export const FACE_MATCH_THRESHOLD = 0.8;
 
 /** URL / DB (env override) */
 export const OLLAMA_URL = process.env.OLLAMA_URL ?? 'http://localhost:11434';

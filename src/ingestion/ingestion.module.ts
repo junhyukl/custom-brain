@@ -1,5 +1,6 @@
 import { Module } from '@nestjs/common';
 import { BrainCoreModule } from '../brain-core/brain-core.module';
+import { BrainModule } from '../brain/brain.module';
 import { VisionModule } from '../vision/vision.module';
 import { PhotoIngestService } from './photo.ingest';
 import { PhotoProcessService } from './photo.process';
@@ -8,7 +9,7 @@ import { DocumentProcessService } from './document.process';
 import { EmailIngestService } from './email.ingest';
 
 @Module({
-  imports: [BrainCoreModule, VisionModule],
+  imports: [BrainCoreModule, BrainModule, VisionModule],
   providers: [
     PhotoIngestService,
     PhotoProcessService,

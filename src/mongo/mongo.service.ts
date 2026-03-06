@@ -5,6 +5,7 @@ import type { Person } from '../brain-schema';
 import {
   MONGO_COLLECTION_MEMORIES,
   MONGO_COLLECTION_PERSONS,
+  MONGO_COLLECTION_GRAPH_EDGES,
   MONGO_URL,
   MONGO_DB_NAME,
 } from '../common/constants';
@@ -34,4 +35,16 @@ export class MongoService implements OnModuleInit, OnModuleDestroy {
   getPersonCollection(): Collection<Person> {
     return this.db.collection<Person>(MONGO_COLLECTION_PERSONS);
   }
+
+  getGraphEdgesCollection(): Collection<GraphEdge> {
+    return this.db.collection<GraphEdge>(MONGO_COLLECTION_GRAPH_EDGES);
+  }
+}
+
+export interface GraphEdge {
+  from: string;
+  to: string;
+  type: 'parent' | 'photo_together';
+  photoPath?: string;
+  createdAt?: Date;
 }

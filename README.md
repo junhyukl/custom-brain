@@ -54,6 +54,14 @@ docker compose -f docker/docker-compose.yml up -d
 - Qdrant: `http://localhost:6333`
 - MongoDB: `mongodb://localhost:27017`
 
+필요한 Docker 서비스 연결 확인:
+
+```bash
+pnpm run test:docker
+```
+
+(Qdrant, MongoDB, Ollama 각각 OK/FAIL 출력. Qdrant·Mongo 둘 다 없으면 exit 1)
+
 ### 4. 빌드 및 실행
 
 ```bash
@@ -478,6 +486,7 @@ custom-brain/
 | `pnpm run test:watch` | 테스트 watch |
 | `pnpm run test:cov` | 커버리지 |
 | `pnpm run test:e2e` | E2E 테스트 |
+| `pnpm run test:docker` | Qdrant/MongoDB/Ollama 연결 테스트 |
 
 ## OpenClaw 연동
 

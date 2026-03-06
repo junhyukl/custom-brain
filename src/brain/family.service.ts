@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { MongoService } from '../mongo/mongo.service';
+import { MongoService, type GraphEdge } from '../mongo/mongo.service';
 import { ObjectId } from 'mongodb';
 import type { Person, PersonRelation } from '../brain-schema';
 
@@ -10,6 +10,11 @@ export interface FamilyTreeEntry {
   birthDate?: string;
   description?: string;
   children: FamilyTreeEntry[];
+}
+
+export interface FamilyGraphResponse {
+  nodes: Array<{ id: string; name: string; type: 'person' }>;
+  edges: Array<{ from: string; to: string; relation: string; photoPath?: string }>;
 }
 
 @Injectable()
@@ -58,5 +63,53 @@ export class FamilyService {
 
   async getPerson(id: string): Promise<Person | null> {
     return this.mongo.getPersonCollection().findOne({ id });
+  }
+
+  /** 사진에 함께 등장한 두 인물을 그래프에 연결 */
+  async addPhotoTogetherEdge(personId1: string, personId2: string, photoPath: string): Promise<void> {
+    if (personId1 === personId2) return;
+    const edges = this.mongo.getGraphEdgesCollection();
+    const existing = await edges.findOne({
+      $or: [
+        { from: personId1, to: personId2, type: 'photo_together' },
+        { from: personId2, to: personId1, type: 'photo_together' },
+      ],
+    });
+    if (existing) return;
+    await edges.insertOne({
+      from: personId1,
+      to: personId2,
+      type: 'photo_together',
+      photoPath,
+      createdAt: new Date(),
+    });
+  }
+
+  /** Family Graph: nodes(persons) + edges(parent + photo_together) */
+  async getGraph(): Promise<FamilyGraphResponse> {
+    const persons = await this.listPersons();
+    const nodes = persons.map((p) => ({ id: p.id, name: p.name, type: 'person' as const }));
+
+    const edges: FamilyGraphResponse['edges'] = [];
+    for (const p of persons) {
+      for (const parentId of p.parentIds ?? []) {
+        edges.push({ from: parentId, to: p.id, relation: 'parent' });
+      }
+    }
+    const graphEdges = await this.mongo.getGraphEdgesCollection().find({}).toArray();
+    for (const e of graphEdges as GraphEdge[]) {
+      edges.push({
+        from: e.from,
+        to: e.to,
+        relation: e.type,
+        photoPath: e.photoPath,
+      });
+    }
+    return { nodes, edges };
+  }
+
+  /** 이름으로 person 찾기 (첫 번째 매칭) */
+  async findPersonByName(name: string): Promise<Person | null> {
+    return this.mongo.getPersonCollection().findOne({ name });
   }
 }

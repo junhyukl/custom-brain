@@ -28,6 +28,7 @@
     "test:upload-photo": "ts-node -r tsconfig-paths/register scripts/test-upload-photo.ts",
     "test:upload-document": "ts-node -r tsconfig-paths/register scripts/test-upload-document.ts",
     "clear-timeline": "ts-node -r tsconfig-paths/register scripts/clear-timeline.ts",
+    "test:docker": "node scripts/test-docker.js",
     "dev:ui": "pnpm -C frontend dev",
     "build:ui": "pnpm -C frontend build"
   },
