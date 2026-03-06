@@ -1,6 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import axios from 'axios';
 import { OLLAMA_URL } from '../common/constants';
+import { toErrorMessage } from '../common/error.util';
 import { LlmClient } from './llmClient';
 
 function wrapOllamaApiError(err: unknown, context: string): never {
@@ -21,7 +22,7 @@ function wrapOllamaApiError(err: unknown, context: string): never {
     }
     throw new Error(`${context}: ${msg}`);
   }
-  throw err;
+  throw new Error(`${context}: ${toErrorMessage(err)}`);
 }
 
 @Injectable()

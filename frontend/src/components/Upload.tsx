@@ -1,6 +1,7 @@
 import { useState, useRef } from 'react';
 import axios from 'axios';
 import { PHOTO_ACCEPT, DOCUMENT_ACCEPT } from '../constants';
+import { toErrorMessage } from '../utils/request';
 
 type UploadType = 'photo' | 'document';
 
@@ -35,17 +36,7 @@ export default function Upload() {
         setMessage({ type: 'error', text: res.data.error ?? '업로드 실패' });
       }
     } catch (err: unknown) {
-      let text = '업로드 중 오류가 발생했습니다.';
-      if (axios.isAxiosError(err)) {
-        const status = err.response?.status;
-        const url = err.config?.url ?? endpoint;
-        text = status != null
-          ? `요청 실패 (${status}): ${url}`
-          : err.message || text;
-      } else if (err instanceof Error) {
-        text = err.message;
-      }
-      setMessage({ type: 'error', text });
+      setMessage({ type: 'error', text: toErrorMessage(err) });
     } finally {
       setUploading(false);
       if (uploadType === 'photo') photoInputRef.current?.form?.reset();

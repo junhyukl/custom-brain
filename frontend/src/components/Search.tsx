@@ -1,22 +1,12 @@
 import { useState } from 'react';
 import axios from 'axios';
-import { toPhotoUrl } from '../utils/photoUrl';
-import { toErrorMessage } from '../utils/request';
 import { API_SEARCH_LIMIT } from '../constants';
+import { toPhotoUrl } from '../utils/photoUrl';
+import { getFileName } from '../utils/filePath';
+import { toErrorMessage } from '../utils/request';
+import type { MemoryHit } from '../types/api';
 import PhotoModal from './PhotoModal';
 import DocumentModal from './DocumentModal';
-
-export interface MemoryHit {
-  id: string;
-  content: string;
-  type?: string;
-  metadata?: {
-    filePath?: string;
-    people?: string[];
-    date?: string;
-    location?: string;
-  };
-}
 
 export default function Search() {
   const [query, setQuery] = useState('');
@@ -122,7 +112,7 @@ export default function Search() {
             )}
             {r.type === 'document' && r.metadata?.filePath && (
               <div className="px-3 py-2 bg-zinc-800 text-zinc-400 text-sm truncate">
-                {r.metadata.filePath.split(/[/\\]/).pop()}
+                {getFileName(r.metadata.filePath)}
               </div>
             )}
             <div className="p-3 flex-1 text-sm text-zinc-300 line-clamp-3">

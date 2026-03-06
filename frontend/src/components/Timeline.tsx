@@ -2,23 +2,7 @@ import { useCallback, useEffect, useState } from 'react';
 import axios from 'axios';
 import { API_TIMELINE_LIMIT } from '../constants';
 import { useDeleteMemory } from '../hooks/useDeleteMemory';
-
-export interface TimelineEntry {
-  date: string;
-  description: string;
-  memoryId: string;
-  type: string;
-  scope: string;
-}
-
-interface MemoryDetail {
-  id: string;
-  content: string;
-  type: string;
-  scope: string;
-  metadata: { date?: string; filePath?: string; people?: string[] };
-  createdAt: string;
-}
+import type { TimelineEntry, MemoryDetail } from '../types/api';
 
 function groupByYear(events: TimelineEntry[]): Map<string, TimelineEntry[]> {
   const byYear = new Map<string, TimelineEntry[]>();

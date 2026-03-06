@@ -35,7 +35,7 @@ export class PhotoProcessService {
     }
 
     const faces = await detectFaces(filePath);
-    const description = await this.imageDescribe.describeFromPath(filePath, true);
+    const description = await this.imageDescribe.describeFromPath(filePath, true); // search-optimized caption
     const people = faces.map((f) => f.name).filter((n) => n !== 'unknown');
     const memory = await this.memory.store(description, {
       type: 'photo',

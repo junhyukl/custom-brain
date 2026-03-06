@@ -48,3 +48,9 @@ export function parseLimit(value: string | undefined, fallback: number): number 
   const n = Number(value);
   return Number.isNaN(n) ? fallback : n;
 }
+
+/** 업로드 API 사용자 메시지 */
+export const ALLOWED_DOC_EXT_MSG = '지원 형식: PDF, DOCX, TXT, MD';
+export const UPLOAD_NO_FILE_MSG = '파일이 없습니다. field name은 "file" 이어야 합니다.';
+export const UPLOAD_400_HINT =
+  '서버 내부 400 (Ollama 이미지/임베딩 또는 Qdrant). pnpm run clear-timeline 후 재시도하거나, Ollama(llava·nomic-embed-text) 및 Qdrant 상태를 확인하세요.';

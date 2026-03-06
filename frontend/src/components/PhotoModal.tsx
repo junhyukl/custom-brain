@@ -1,7 +1,8 @@
 import { useEffect, useCallback } from 'react';
 import { toPhotoUrl } from '../utils/photoUrl';
+import { getFileName } from '../utils/filePath';
 import { useDeleteMemory } from '../hooks/useDeleteMemory';
-import type { MemoryHit } from './Search';
+import type { MemoryHit } from '../types/api';
 
 type PhotoModalProps = {
   photo: MemoryHit | null;
@@ -105,7 +106,7 @@ export default function PhotoModal({ photo, onClose, onDeleted }: PhotoModalProp
           )}
 
           <div className="text-xs text-zinc-500 truncate" title={photo.metadata.filePath}>
-            {photo.metadata.filePath.split(/[/\\]/).pop()}
+            {getFileName(photo.metadata.filePath)}
           </div>
 
           <div className="pt-3 border-t border-zinc-700 flex justify-end gap-2">

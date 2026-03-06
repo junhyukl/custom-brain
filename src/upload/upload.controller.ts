@@ -14,10 +14,7 @@ import { UploadService } from './upload.service';
 import { PhotoProcessService } from '../ingestion/photo.process';
 import { DocumentProcessService } from '../ingestion/document.process';
 import { toErrorMessage } from '../common/error.util';
-import { MAX_UPLOAD_BYTES } from '../common/constants';
-
-const UPLOAD_400_HINT =
-  '서버 내부 400 (Ollama 이미지/임베딩 또는 Qdrant). pnpm run clear-timeline 후 재시도하거나, Ollama(llava·nomic-embed-text) 및 Qdrant 상태를 확인하세요.';
+import { MAX_UPLOAD_BYTES, UPLOAD_400_HINT, UPLOAD_NO_FILE_MSG } from '../common/constants';
 
 @Controller('brain/upload')
 export class UploadController {
@@ -41,7 +38,7 @@ export class UploadController {
     | { success: false; error: string }
   > {
     if (!file?.buffer) {
-      throw new BadRequestException('파일이 없습니다. field name은 "file" 이어야 합니다.');
+      throw new BadRequestException(UPLOAD_NO_FILE_MSG);
     }
     const fileSize = file.buffer.length;
     try {
@@ -72,7 +69,7 @@ export class UploadController {
     | { success: false; error: string }
   > {
     if (!file?.buffer) {
-      throw new BadRequestException('파일이 없습니다. field name은 "file" 이어야 합니다.');
+      throw new BadRequestException(UPLOAD_NO_FILE_MSG);
     }
     try {
       const filePath = await this.upload.saveFile(file.buffer, file.originalname, 'document');

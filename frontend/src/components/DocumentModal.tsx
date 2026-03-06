@@ -1,6 +1,7 @@
 import { useEffect, useCallback } from 'react';
 import { useDeleteMemory } from '../hooks/useDeleteMemory';
-import type { MemoryHit } from './Search';
+import { getFileName } from '../utils/filePath';
+import type { MemoryHit } from '../types/api';
 
 type DocumentModalProps = {
   doc: MemoryHit | null;
@@ -43,7 +44,7 @@ export default function DocumentModal({ doc, onClose, onDeleted }: DocumentModal
 
   if (!doc) return null;
 
-  const fileName = doc.metadata?.filePath?.split(/[/\\]/).pop() ?? '문서';
+  const fileName = getFileName(doc.metadata?.filePath, '문서');
 
   return (
     <div
