@@ -33,3 +33,18 @@ export const DOCUMENT_EXT_REGEX = /\.(pdf|docx|txt|md)$/i;
 export function zeroVector(dimension = EMBEDDING_DIMENSION): number[] {
   return new Array(dimension).fill(0);
 }
+
+/** 업로드 최대 파일 크기 (25MB) */
+export const MAX_UPLOAD_BYTES = 25 * 1024 * 1024;
+
+/** API 기본 limit 값 */
+export const DEFAULT_RECALL_LIMIT = 50;
+export const DEFAULT_TIMELINE_LIMIT = 100;
+export const DEFAULT_SEARCH_LIMIT = 10;
+
+/** Query string limit 파싱 (빈 값/NaN이면 fallback) */
+export function parseLimit(value: string | undefined, fallback: number): number {
+  if (value == null || value === '') return fallback;
+  const n = Number(value);
+  return Number.isNaN(n) ? fallback : n;
+}

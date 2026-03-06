@@ -1,6 +1,7 @@
 import { Body, Controller, Delete, Get, Param, Post, Query } from '@nestjs/common';
 import { MemoryService } from '../brain-core/memory.service';
 import { CreateMemoryDto } from '../brain/dto';
+import { DEFAULT_RECALL_LIMIT, parseLimit } from '../common/constants';
 import type { Memory } from '../brain-schema';
 
 @Controller('brain')
@@ -19,7 +20,7 @@ export class MemoryController {
 
   @Get('memory/recall')
   async recall(@Query('limit') limit?: string): Promise<{ memories: Memory[] }> {
-    const list = await this.memory.recall(limit ? Number(limit) : 50);
+    const list = await this.memory.recall(parseLimit(limit, DEFAULT_RECALL_LIMIT));
     return { memories: list };
   }
 

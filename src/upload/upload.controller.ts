@@ -1,4 +1,5 @@
 import path from 'path';
+import axios from 'axios';
 import {
   Controller,
   Post,
@@ -13,8 +14,10 @@ import { UploadService } from './upload.service';
 import { PhotoProcessService } from '../ingestion/photo.process';
 import { DocumentProcessService } from '../ingestion/document.process';
 import { toErrorMessage } from '../common/error.util';
+import { MAX_UPLOAD_BYTES } from '../common/constants';
 
-const MAX_FILE_SIZE = 25 * 1024 * 1024; // 25MB
+const UPLOAD_400_HINT =
+  '서버 내부 400 (Ollama 이미지/임베딩 또는 Qdrant). pnpm run clear-timeline 후 재시도하거나, Ollama(llava·nomic-embed-text) 및 Qdrant 상태를 확인하세요.';
 
 @Controller('brain/upload')
 export class UploadController {
@@ -28,7 +31,7 @@ export class UploadController {
   @HttpCode(HttpStatus.CREATED)
   @UseInterceptors(
     FileInterceptor('file', {
-      limits: { fileSize: MAX_FILE_SIZE },
+      limits: { fileSize: MAX_UPLOAD_BYTES },
     }),
   )
   async uploadPhoto(
@@ -48,9 +51,8 @@ export class UploadController {
     } catch (err) {
       let message = toErrorMessage(err);
       console.error('[brain/upload/photo] fileSize=%s', fileSize, err instanceof Error ? err.stack : message);
-      if (message === 'Request failed with status code 400') {
-        message =
-          '서버 내부 400 (Ollama 이미지/임베딩 또는 Qdrant). pnpm run clear-timeline 후 재시도하거나, Ollama(llava·nomic-embed-text) 및 Qdrant 상태를 확인하세요.';
+      if (axios.isAxiosError(err) && err.response?.status === 400) {
+        message = UPLOAD_400_HINT;
       }
       return { success: false, error: message };
     }
@@ -60,7 +62,7 @@ export class UploadController {
   @HttpCode(HttpStatus.CREATED)
   @UseInterceptors(
     FileInterceptor('file', {
-      limits: { fileSize: MAX_FILE_SIZE },
+      limits: { fileSize: MAX_UPLOAD_BYTES },
     }),
   )
   async uploadDocument(

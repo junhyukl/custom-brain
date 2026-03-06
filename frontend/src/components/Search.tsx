@@ -1,6 +1,8 @@
 import { useState } from 'react';
 import axios from 'axios';
 import { toPhotoUrl } from '../utils/photoUrl';
+import { toErrorMessage } from '../utils/request';
+import { API_SEARCH_LIMIT } from '../constants';
 import PhotoModal from './PhotoModal';
 
 export interface MemoryHit {
@@ -35,13 +37,13 @@ export default function Search() {
             ? '/brain/documents/search'
             : '/brain/memory/search';
       const res = await axios.get<{ results: MemoryHit[]; error?: string }>(path, {
-        params: { q: query.trim(), limit: 12 },
+        params: { q: query.trim(), limit: API_SEARCH_LIMIT },
       });
       setResults(res.data.results ?? []);
       setError(res.data.error ?? null);
     } catch (err: unknown) {
       setResults([]);
-      setError(err instanceof Error ? err.message : '검색 실패');
+      setError(toErrorMessage(err));
     } finally {
       setLoading(false);
     }

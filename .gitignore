@@ -58,15 +58,19 @@ pids
 # Diagnostic reports (https://nodejs.org/api/report.html)
 report.[0-9]*.[0-9]*.[0-9]*.[0-9]*.json
 
-# brain-data: 사진·문서 파일 제외 (용량·민감 정보)
+# brain-data: 사진·문서·노트 등 파일 제외 (용량·민감 정보)
 brain-data/personal/photos/*
 !brain-data/personal/photos/.gitkeep
 brain-data/personal/documents/*
 !brain-data/personal/documents/.gitkeep
+brain-data/personal/notes/*
+!brain-data/personal/notes/.gitkeep
 brain-data/family/photos/*
 !brain-data/family/photos/.gitkeep
 brain-data/family/documents/*
 !brain-data/family/documents/.gitkeep
+brain-data/family/history/*
+!brain-data/family/history/.gitkeep
 brain-data/family/faces_src/*
 !brain-data/family/faces_src/.gitkeep
 qdrant_storage/

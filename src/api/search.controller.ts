@@ -1,19 +1,26 @@
 import { Controller, Get, Query } from '@nestjs/common';
 import { SearchService } from '../brain-core/search.service';
 import { toErrorMessage } from '../common/error.util';
+import { DEFAULT_SEARCH_LIMIT, parseLimit } from '../common/constants';
 import type { Memory, MemoryScope } from '../brain-schema';
-
-const DEFAULT_LIMIT = 10;
-
-function parseLimit(value: string | undefined, fallback = DEFAULT_LIMIT): number {
-  if (value == null || value === '') return fallback;
-  const n = Number(value);
-  return Number.isFinite(n) ? n : fallback;
-}
 
 @Controller('brain')
 export class SearchController {
   constructor(private readonly searchService: SearchService) {}
+
+  private async handleSearch(
+    tag: string,
+    fn: () => Promise<Memory[]>,
+  ): Promise<{ results: Memory[]; error?: string }> {
+    try {
+      const results = await fn();
+      return { results };
+    } catch (err) {
+      const message = toErrorMessage(err);
+      console.error(`[${tag}]`, message);
+      return { results: [], error: message };
+    }
+  }
 
   @Get('memory/search')
   async search(
@@ -21,18 +28,9 @@ export class SearchController {
     @Query('limit') limit?: string,
     @Query('scope') scope?: MemoryScope,
   ): Promise<{ results: Memory[]; error?: string }> {
-    try {
-      const results = await this.searchService.search(
-        q ?? '',
-        parseLimit(limit),
-        scope,
-      );
-      return { results };
-    } catch (err) {
-      const message = toErrorMessage(err);
-      console.error('[brain/memory/search]', message);
-      return { results: [], error: message };
-    }
+    return this.handleSearch('brain/memory/search', () =>
+      this.searchService.search(q ?? '', parseLimit(limit, DEFAULT_SEARCH_LIMIT), scope),
+    );
   }
 
   @Get('photos/search')
@@ -40,17 +38,9 @@ export class SearchController {
     @Query('q') q: string,
     @Query('limit') limit?: string,
   ): Promise<{ results: Memory[]; error?: string }> {
-    try {
-      const results = await this.searchService.searchPhotos(
-        q ?? '',
-        parseLimit(limit),
-      );
-      return { results };
-    } catch (err) {
-      const message = toErrorMessage(err);
-      console.error('[brain/photos/search]', message);
-      return { results: [], error: message };
-    }
+    return this.handleSearch('brain/photos/search', () =>
+      this.searchService.searchPhotos(q ?? '', parseLimit(limit, DEFAULT_SEARCH_LIMIT)),
+    );
   }
 
   @Get('documents/search')
@@ -58,16 +48,8 @@ export class SearchController {
     @Query('q') q: string,
     @Query('limit') limit?: string,
   ): Promise<{ results: Memory[]; error?: string }> {
-    try {
-      const results = await this.searchService.searchDocuments(
-        q ?? '',
-        parseLimit(limit),
-      );
-      return { results };
-    } catch (err) {
-      const message = toErrorMessage(err);
-      console.error('[brain/documents/search]', message);
-      return { results: [], error: message };
-    }
+    return this.handleSearch('brain/documents/search', () =>
+      this.searchService.searchDocuments(q ?? '', parseLimit(limit, DEFAULT_SEARCH_LIMIT)),
+    );
   }
 }

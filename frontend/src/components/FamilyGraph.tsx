@@ -59,7 +59,7 @@ export default function FamilyGraph() {
     const ro = new ResizeObserver(update);
     ro.observe(el);
     return () => ro.disconnect();
-  }, [data.nodes.length]);
+  }, []);
 
   useEffect(() => {
     axios

@@ -1,6 +1,6 @@
-import { useEffect, useCallback, useState } from 'react';
-import axios from 'axios';
+import { useEffect, useCallback } from 'react';
 import { toPhotoUrl } from '../utils/photoUrl';
+import { useDeleteMemory } from '../hooks/useDeleteMemory';
 import type { MemoryHit } from './Search';
 
 type PhotoModalProps = {
@@ -10,7 +10,7 @@ type PhotoModalProps = {
 };
 
 export default function PhotoModal({ photo, onClose, onDeleted }: PhotoModalProps) {
-  const [deleteLoading, setDeleteLoading] = useState(false);
+  const { deleteMemory, loading: deleteLoading } = useDeleteMemory();
 
   const handleEscape = useCallback(
     (e: KeyboardEvent) => {
@@ -30,23 +30,17 @@ export default function PhotoModal({ photo, onClose, onDeleted }: PhotoModalProp
   }, [photo, handleEscape]);
 
   const handleDelete = useCallback(() => {
-    if (!photo?.id || deleteLoading) return;
-    if (!confirm('이 사진과 연결된 파일·벡터·메모리를 모두 삭제합니다. 계속할까요?')) return;
-    setDeleteLoading(true);
-    axios
-      .delete<{ deleted: boolean; error?: string }>(`/brain/memory/${photo.id}`)
-      .then((res) => {
-        if (res.data?.deleted) {
-          onDeleted?.(photo.id);
-          window.dispatchEvent(new CustomEvent('memory-deleted', { detail: { id: photo.id } }));
-          onClose();
-        } else {
-          alert(res.data?.error ?? '삭제에 실패했습니다.');
-        }
-      })
-      .catch(() => alert('삭제 요청 중 오류가 발생했습니다.'))
-      .finally(() => setDeleteLoading(false));
-  }, [photo?.id, deleteLoading, onClose, onDeleted]);
+    if (!photo?.id) return;
+    const id = photo.id;
+    deleteMemory(id, {
+      confirmMessage: '이 사진과 연결된 파일·벡터·메모리를 모두 삭제합니다. 계속할까요?',
+      onSuccess: () => {
+        onDeleted?.(id);
+        window.dispatchEvent(new CustomEvent('memory-deleted', { detail: { id } }));
+        onClose();
+      },
+    });
+  }, [photo?.id, deleteMemory, onClose, onDeleted]);
 
   if (!photo || !photo.metadata?.filePath) return null;
 

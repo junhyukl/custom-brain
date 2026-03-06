@@ -1,6 +1,7 @@
 import { Controller, Get, Query } from '@nestjs/common';
 import { TimelineService } from '../brain-core/timeline.service';
 import { toErrorMessage } from '../common/error.util';
+import { DEFAULT_TIMELINE_LIMIT, parseLimit } from '../common/constants';
 import type { MemoryScope } from '../brain-schema';
 import type { TimelineEntry } from '../brain-core/timeline.service';
 
@@ -14,8 +15,10 @@ export class TimelineController {
     @Query('limit') limit?: string,
   ): Promise<{ timeline: TimelineEntry[]; error?: string }> {
     try {
-      const limitN = limit != null && limit !== '' ? Number(limit) : 100;
-      const timeline = await this.timeline.getTimeline(scope, limitN);
+      const timeline = await this.timeline.getTimeline(
+        scope,
+        parseLimit(limit, DEFAULT_TIMELINE_LIMIT),
+      );
       return { timeline };
     } catch (err) {
       const message = toErrorMessage(err);

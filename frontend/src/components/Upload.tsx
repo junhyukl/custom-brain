@@ -1,10 +1,8 @@
 import { useState, useRef } from 'react';
 import axios from 'axios';
+import { PHOTO_ACCEPT, DOCUMENT_ACCEPT } from '../constants';
 
 type UploadType = 'photo' | 'document';
-
-const PHOTO_ACCEPT = 'image/jpeg,image/png,image/webp,image/gif';
-const DOCUMENT_ACCEPT = '.pdf,.docx,.doc,.txt,.md';
 
 export default function Upload() {
   const [uploading, setUploading] = useState(false);

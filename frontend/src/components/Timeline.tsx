@@ -1,5 +1,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import axios from 'axios';
+import { API_TIMELINE_LIMIT } from '../constants';
+import { useDeleteMemory } from '../hooks/useDeleteMemory';
 
 export interface TimelineEntry {
   date: string;
@@ -33,7 +35,7 @@ function groupByYear(events: TimelineEntry[]): Map<string, TimelineEntry[]> {
 
 async function fetchTimeline(): Promise<TimelineEntry[]> {
   const res = await axios.get<{ timeline: TimelineEntry[]; error?: string }>('/brain/timeline', {
-    params: { limit: 200 },
+    params: { limit: API_TIMELINE_LIMIT },
   });
   if (res.data.error) throw new Error(res.data.error);
   return res.data.timeline ?? [];
@@ -46,7 +48,7 @@ export default function Timeline() {
   const [selectedMemoryId, setSelectedMemoryId] = useState<string | null>(null);
   const [detail, setDetail] = useState<MemoryDetail | null>(null);
   const [detailLoading, setDetailLoading] = useState(false);
-  const [deleteLoading, setDeleteLoading] = useState(false);
+  const { deleteMemory, loading: deleteLoading } = useDeleteMemory();
 
   const loadTimeline = useCallback(() => {
     setLoading(true);
@@ -81,23 +83,15 @@ export default function Timeline() {
 
   const handleDelete = useCallback(() => {
     const id = detail?.id ?? selectedMemoryId;
-    if (!id || deleteLoading) return;
-    if (!confirm('이 메모리와 연결된 파일·벡터 데이터를 모두 삭제합니다. 계속할까요?')) return;
-    setDeleteLoading(true);
-    axios
-      .delete<{ deleted: boolean; error?: string }>(`/brain/memory/${id}`)
-      .then((res) => {
-        if (res.data?.deleted) {
-          setSelectedMemoryId(null);
-          setDetail(null);
-          loadTimeline();
-        } else {
-          alert(res.data?.error ?? '삭제에 실패했습니다.');
-        }
-      })
-      .catch(() => alert('삭제 요청 중 오류가 발생했습니다.'))
-      .finally(() => setDeleteLoading(false));
-  }, [detail?.id, selectedMemoryId, deleteLoading, loadTimeline]);
+    if (!id) return;
+    deleteMemory(id, {
+      onSuccess: () => {
+        setSelectedMemoryId(null);
+        setDetail(null);
+        loadTimeline();
+      },
+    });
+  }, [detail?.id, selectedMemoryId, deleteMemory, loadTimeline]);
 
   const byYear = groupByYear(events);
   const years = Array.from(byYear.keys()).sort((a, b) =>
