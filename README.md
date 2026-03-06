@@ -77,6 +77,18 @@ pnpm run start:prod
 
 기본 포트는 **3001**입니다. `PORT=8080 pnpm run start:prod` 로 변경할 수 있습니다.
 
+**한 번에 모든 서비스 실행** (Docker 인프라 + Nest + ai-service + face-service):
+
+```bash
+# 1) Docker: 루트 docker-compose.yml 기준으로 Qdrant, Mongo만 up
+# 2) 그 다음 Nest + 로컬 ai-service + face-service 동시 실행
+pnpm run start:all
+```
+
+- **start:docker** (start:all에 포함): `docker compose up -d qdrant mongo` → 6333, 27017 (루트 `docker-compose.yml` 사용)
+- **start:all**: Docker 실패 시에도 앱은 실행 (`|| true`). Nest 3001, ai 8000, face 8001 (concurrently)
+- ai-service·face-service는 최초 1회 각 폴더에서 `venv` + `pip install -r requirements.txt` 필요
+
 ---
 
 ## 전체 사용법
@@ -476,6 +488,8 @@ custom-brain/
 | `pnpm run build` | 빌드 |
 | `pnpm run start` | 일반 시작 |
 | `pnpm run start:dev` | watch 모드 |
+| `pnpm run start:docker` | Docker만: Qdrant + Mongo up (루트 docker-compose.yml) |
+| `pnpm run start:all` | Docker 인프라 후 Nest + ai(8000) + face(8001) 동시 실행 |
 | `pnpm run start:prod` | dist 기반 프로덕션 |
 | `pnpm run ingest-photos` | personal + family 사진 스캔 → 얼굴 태깅 → Vision·임베딩·Qdrant·Memory |
 | `pnpm run ingest-all` | 사진 + 문서(PDF/DOCX/TXT/MD) 통합 스캔 → Memory |
