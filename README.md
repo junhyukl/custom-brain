@@ -9,6 +9,7 @@ NestJS 기반 개인화 AI 브레인 API. 메모리 검색·저장, RAG, 자동 
 - **자동 메모리 평가**: 대화나 답변을 “저장할 만한가?” LLM으로 판단해, 중요한 것만 저장하고 나머지는 무시합니다 (Important? → store / ignore).
 - **로컬 우선**: Ollama 등 로컬 LLM과 (선택) Qdrant로 동작해, 데이터를 외부 클라우드에 넘기지 않고 쓸 수 있습니다.
 - **v2 Auto Memory Pipeline**: 사진/문서 업로드 → AI 분석 → 임베딩 → Vector DB → 타임라인·가족 그래프 자동 반영. [아키텍처 상세](docs/ARCHITECTURE_V2.md)
+- **v3 Self-Learning**: AI가 메모리 클러스터링·타임라인·지식 그래프·요약을 자동 수행. `POST /brain/organize` 및 매일 새벽 cron. [아키텍처 상세](docs/ARCHITECTURE_V3.md)
 
 ## 스택
 

@@ -9,6 +9,10 @@ export interface MemoryMetadata {
   date?: string;
   source?: string;
   filePath?: string;
+  /** v3: cluster label from KMeans (0..n-1) */
+  clusterId?: number;
+  /** v3: optional topic label for cluster */
+  clusterTopic?: string;
 }
 
 export interface Memory {

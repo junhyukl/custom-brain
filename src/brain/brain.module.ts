@@ -6,12 +6,15 @@ import { RagService } from './rag.service';
 import { AgentMemoryService } from './agentMemory.service';
 import { FamilyService } from './family.service';
 import { PhotoAnalyzeService } from './photo-analyze.service';
+import { BrainOrganizeService } from './brain-organize.service';
 import { BrainRoutes } from '../routes/brain.routes';
 import { LlmModule } from '../llm/llm.module';
 import { MongoModule } from '../mongo/mongo.module';
+import { AiServiceModule } from '../ai-service/ai-service.module';
+import { Neo4jModule } from '../neo4j/neo4j.module';
 
 @Module({
-  imports: [BrainCoreModule, LlmModule, MongoModule],
+  imports: [BrainCoreModule, LlmModule, MongoModule, AiServiceModule, Neo4jModule],
   controllers: [BrainRoutes],
   providers: [
     MemoryEvaluatorService,
@@ -20,6 +23,7 @@ import { MongoModule } from '../mongo/mongo.module';
     AgentMemoryService,
     FamilyService,
     PhotoAnalyzeService,
+    BrainOrganizeService,
   ],
   exports: [
     MemoryEvaluatorService,
@@ -28,6 +32,7 @@ import { MongoModule } from '../mongo/mongo.module';
     AgentMemoryService,
     FamilyService,
     PhotoAnalyzeService,
+    BrainOrganizeService,
   ],
 })
 export class BrainModule {}

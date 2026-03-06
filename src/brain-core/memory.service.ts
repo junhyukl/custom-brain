@@ -167,4 +167,21 @@ export class MemoryService {
       .limit(limit)
       .toArray();
   }
+
+  /** v3: 메모리 메타데이터 일부 업데이트 (clusterId, clusterTopic 등). */
+  async updateMetadata(
+    id: string,
+    patch: Partial<MemoryMetadata>,
+  ): Promise<boolean> {
+    const setObj: Record<string, unknown> = {};
+    for (const [k, v] of Object.entries(patch)) {
+      if (v !== undefined) setObj[`metadata.${k}`] = v;
+    }
+    if (!Object.keys(setObj).length) return false;
+    const result = await this.mongo.getMemoryCollection().updateOne(
+      { id },
+      { $set: setObj },
+    );
+    return result.modifiedCount === 1;
+  }
 }

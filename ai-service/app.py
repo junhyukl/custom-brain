@@ -1,9 +1,8 @@
 """
-Custom Brain v2 - AI Service (Python FastAPI).
-- Vision caption (Ollama llava)
-- Embedding (nomic-embed-text)
-- OCR placeholder (확장 가능)
-NestJS에서 AI_SERVICE_URL=http://localhost:8000 로 호출 시 업로드 파이프라인에서 사용.
+Custom Brain v2/v3 - AI Service (Python FastAPI).
+- v2: Vision caption, Embedding, OCR placeholder
+- v3: Clustering, Summarization, Timeline generation
+NestJS에서 AI_SERVICE_URL=http://localhost:8000 로 호출.
 """
 import os
 from pathlib import Path
@@ -11,11 +10,12 @@ from pathlib import Path
 from fastapi import FastAPI, File, UploadFile, Body
 from pydantic import BaseModel
 
-app = FastAPI(title="Custom Brain AI Service", version="0.1.0")
+app = FastAPI(title="Custom Brain AI Service", version="0.2.0")
 
 OLLAMA_HOST = os.environ.get("OLLAMA_HOST", "http://localhost:11434")
 VISION_MODEL = os.environ.get("VISION_MODEL", "llava")
 EMBED_MODEL = os.environ.get("EMBED_MODEL", "nomic-embed-text")
+LLM_MODEL = os.environ.get("LLM_MODEL", "mistral:7b-instruct")
 
 # ollama Python client (host via env OLLAMA_HOST)
 try:
@@ -107,3 +107,79 @@ def embed(body: EmbedBody):
 @app.get("/health")
 def health():
     return {"status": "ok", "ollama": OLLAMA_HOST}
+
+
+# --- v3 Self-Learning ---
+
+class ClusterBody(BaseModel):
+    vectors: list[list[float]] = []
+
+
+class SummarizeBody(BaseModel):
+    memories: list[str] = []
+    max_tokens: int = 500
+
+
+class TimelineBody(BaseModel):
+    memories: list[str] = []
+
+
+def _llm_generate(prompt: str, model: str = LLM_MODEL) -> str:
+    if not ollama:
+        return ""
+    try:
+        r = ollama.chat(model=model, messages=[{"role": "user", "content": prompt}])
+        msg = r.get("message") or {}
+        return (msg.get("content") or "").strip()
+    except Exception:
+        return ""
+
+
+@app.post("/cluster")
+def cluster(body: ClusterBody):
+    """v3: KMeans clustering on vectors. Returns cluster label per index."""
+    vectors = body.vectors
+    if not vectors or not vectors[0]:
+        return {"clusters": []}
+    try:
+        from sklearn.cluster import KMeans
+        import numpy as np
+        X = np.array(vectors, dtype=np.float64)
+        n = min(10, max(2, len(vectors) // 3))
+        kmeans = KMeans(n_clusters=n, random_state=42, n_init=10)
+        labels = kmeans.fit_predict(X)
+        return {"clusters": labels.tolist(), "n_clusters": n}
+    except Exception as e:
+        return {"clusters": [], "error": str(e)}
+
+
+@app.post("/summarize")
+def summarize(body: SummarizeBody):
+    """v3: LLM으로 메모리 목록 요약."""
+    texts = [t.strip() for t in body.memories if t and t.strip()][:50]
+    if not texts:
+        return {"summary": ""}
+    block = "\n".join(f"- {t}" for t in texts)
+    prompt = f"""Summarize these memories in a few sentences. Keep key people, places, and events.
+
+Memories:
+{block}
+
+Summary:"""
+    return {"summary": _llm_generate(prompt)}
+
+
+@app.post("/timeline")
+def timeline(body: TimelineBody):
+    """v3: LLM으로 메모리에서 시간순 타임라인 생성."""
+    texts = [t.strip() for t in body.memories if t and t.strip()][:80]
+    if not texts:
+        return {"timeline": ""}
+    block = "\n".join(f"- {t}" for t in texts)
+    prompt = f"""Create a short chronological timeline from these memories. One line per event with approximate year if possible.
+
+Memories:
+{block}
+
+Timeline:"""
+    return {"timeline": _llm_generate(prompt)}

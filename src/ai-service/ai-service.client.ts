@@ -46,4 +46,37 @@ export class AiServiceClient {
     );
     return data.vector ?? [];
   }
+
+  /** v3: 벡터 목록 KMeans 클러스터링 → 인덱스별 cluster label */
+  async cluster(vectors: number[][]): Promise<number[]> {
+    if (!vectors.length) return [];
+    const { data } = await axios.post<{ clusters: number[] }>(
+      `${this.baseURL}/cluster`,
+      { vectors },
+      { timeout: 60_000 },
+    );
+    return data.clusters ?? [];
+  }
+
+  /** v3: 메모리 텍스트 목록 요약 */
+  async summarize(memories: string[]): Promise<string> {
+    if (!memories.length) return '';
+    const { data } = await axios.post<{ summary: string }>(
+      `${this.baseURL}/summarize`,
+      { memories },
+      { timeout: 90_000 },
+    );
+    return data.summary ?? '';
+  }
+
+  /** v3: 메모리에서 시간순 타임라인 텍스트 생성 */
+  async timeline(memories: string[]): Promise<string> {
+    if (!memories.length) return '';
+    const { data } = await axios.post<{ timeline: string }>(
+      `${this.baseURL}/timeline`,
+      { memories },
+      { timeout: 90_000 },
+    );
+    return data.timeline ?? '';
+  }
 }

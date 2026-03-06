@@ -1,10 +1,9 @@
-# AI Service (Custom Brain v2)
+# AI Service (Custom Brain v2 / v3)
 
-NestJS 업로드 파이프라인에서 사용하는 통합 AI 서비스 (FastAPI).
+NestJS 업로드 파이프라인 및 v3 Self-Learning에서 사용하는 통합 AI 서비스 (FastAPI).
 
-- **Vision caption**: Ollama `llava`로 사진 설명
-- **Embedding**: `nomic-embed-text`로 텍스트 → 벡터
-- **OCR**: 플레이스홀더 (추후 확장)
+- **v2**: Vision caption (llava), Embedding (nomic-embed-text), OCR 플레이스홀더
+- **v3**: Clustering (KMeans), Summarization, Timeline generation (Ollama LLM)
 
 ## 설치 및 실행
 
@@ -24,6 +23,9 @@ uvicorn app:app --host 0.0.0.0 --port 8000
 |--------|------|------|
 | POST | `/analyze-photo` | `{ "path": "/abs/path" }` 또는 multipart `file` → caption, people, ocr, embedding |
 | POST | `/embed` | `{ "text": "..." }` → `{ "vector": number[] }` |
+| POST | `/cluster` | v3 `{ "vectors": number[][] }` → `{ "clusters": number[] }` |
+| POST | `/summarize` | v3 `{ "memories": string[] }` → `{ "summary": string }` |
+| POST | `/timeline` | v3 `{ "memories": string[] }` → `{ "timeline": string }` |
 | GET | `/health` | 상태 확인 |
 
 ## NestJS 연동
