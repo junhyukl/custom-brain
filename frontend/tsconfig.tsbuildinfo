@@ -1,1 +1,1 @@
-{"root":["./src/app.tsx","./src/main.tsx","./src/vite-env.d.ts","./src/components/familygraph.tsx","./src/components/search.tsx","./src/components/timeline.tsx","./src/utils/photourl.ts"],"version":"5.6.3"}
+{"root":["./src/app.tsx","./src/main.tsx","./src/vite-env.d.ts","./src/components/familygraph.tsx","./src/components/photomodal.tsx","./src/components/search.tsx","./src/components/timeline.tsx","./src/components/upload.tsx","./src/utils/photourl.ts"],"version":"5.6.3"}
