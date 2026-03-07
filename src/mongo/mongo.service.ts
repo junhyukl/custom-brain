@@ -1,7 +1,7 @@
 import { Injectable, OnModuleDestroy, OnModuleInit } from '@nestjs/common';
 import { MongoClient, Db, Collection } from 'mongodb';
-import type { Memory } from '../brain-schema';
-import type { Person } from '../brain-schema';
+import type { Memory } from '../schemas';
+import type { Person } from '../schemas';
 import {
   MONGO_COLLECTION_MEMORIES,
   MONGO_COLLECTION_PERSONS,

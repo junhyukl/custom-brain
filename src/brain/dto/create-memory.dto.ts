@@ -1,4 +1,4 @@
-import type { MemoryScope, MemoryType, MemoryMetadata } from '../../brain-schema';
+import type { MemoryScope, MemoryType, MemoryMetadata } from '../../schemas';
 
 export class CreateMemoryDto {
   content!: string;

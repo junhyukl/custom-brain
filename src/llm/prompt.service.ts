@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import type { Memory } from '../brain-schema';
+import type { Memory } from '../schemas';
 
 @Injectable()
 export class PromptService {

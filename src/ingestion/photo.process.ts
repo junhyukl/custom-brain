@@ -36,17 +36,20 @@ export class PhotoProcessService {
   async processPhoto(
     filePath: string,
     scope: 'personal' | 'family',
+    options?: { metadataFilePath?: string },
   ): Promise<ProcessPhotoResult> {
+    const metaPath = options?.metadataFilePath ?? filePath;
     // v2: AI Service 사용 시 캡션·임베딩을 Python 서비스에서 한 번에 받아 저장
     if (this.aiService.isAvailable()) {
-      return this.processPhotoViaAiService(filePath, scope);
+      return this.processPhotoViaAiService(filePath, scope, metaPath);
     }
-    return this.processPhotoLegacy(filePath, scope);
+    return this.processPhotoLegacy(filePath, scope, metaPath);
   }
 
   private async processPhotoViaAiService(
     filePath: string,
     scope: 'personal' | 'family',
+    metadataFilePath: string,
   ): Promise<ProcessPhotoResult> {
     const ai = await this.aiService.analyzePhoto(filePath);
     const caption = ai.caption || 'Photo (no caption)';
@@ -59,12 +62,12 @@ export class PhotoProcessService {
       ? await this.memory.storeWithVector(caption, embedding, {
           type: 'photo',
           scope,
-          metadata: { filePath, people: people.length ? people : undefined },
+          metadata: { filePath: metadataFilePath, people: people.length ? people : undefined },
         })
       : await this.memory.store(caption, {
           type: 'photo',
           scope,
-          metadata: { filePath, people: people.length ? people : undefined },
+          metadata: { filePath: metadataFilePath, people: people.length ? people : undefined },
         });
     await this.timelineService.addEvent(caption, scope);
 
@@ -79,6 +82,7 @@ export class PhotoProcessService {
   private async processPhotoLegacy(
     filePath: string,
     scope: 'personal' | 'family',
+    metadataFilePath: string,
   ): Promise<ProcessPhotoResult> {
     let exifDate: string | undefined;
     let exifLocation: string | undefined;
@@ -152,7 +156,7 @@ export class PhotoProcessService {
       type: 'photo',
       scope,
       metadata: {
-        filePath,
+        filePath: metadataFilePath,
         people: people.length ? people : undefined,
         personIds: personIds.length ? personIds : undefined,
         date: exifDate,

@@ -16,6 +16,9 @@ OLLAMA_HOST = os.environ.get("OLLAMA_HOST", "http://localhost:11434")
 VISION_MODEL = os.environ.get("VISION_MODEL", "llava")
 EMBED_MODEL = os.environ.get("EMBED_MODEL", "nomic-embed-text")
 LLM_MODEL = os.environ.get("LLM_MODEL", "mistral:7b-instruct")
+# Limit chars to avoid "context length" errors. Env EMBED_MAX_CHARS overrides. Cap 2048 for safety.
+_embed_max = os.environ.get("EMBED_MAX_CHARS", "2000")
+EMBED_MAX_CHARS = min(2048, max(500, int(_embed_max) if _embed_max.isdigit() else 2000))
 
 # ollama Python client (host via env OLLAMA_HOST)
 try:
@@ -56,8 +59,9 @@ def _caption_image(path: str) -> str:
 def _embed_text(text: str) -> list[float]:
     if not ollama:
         return []
+    truncated = text[:EMBED_MAX_CHARS] if len(text) > EMBED_MAX_CHARS else text
     try:
-        r = ollama.embeddings(model=EMBED_MODEL, prompt=text)
+        r = ollama.embeddings(model=EMBED_MODEL, prompt=truncated)
         return list(r.get("embedding") or [])
     except Exception:
         return []

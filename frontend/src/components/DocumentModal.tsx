@@ -1,6 +1,7 @@
 import { useEffect, useCallback } from 'react';
 import { useDeleteMemory } from '../hooks/useDeleteMemory';
 import { getFileName } from '../utils/filePath';
+import OriginalFileLink from './OriginalFileLink';
 import type { MemoryHit } from '../types/api';
 
 type DocumentModalProps = {
@@ -83,6 +84,11 @@ export default function DocumentModal({ doc, onClose, onDeleted }: DocumentModal
         <div className="p-4 overflow-auto flex-1 min-h-0">
           {doc.metadata?.date && (
             <p className="text-xs text-zinc-500 mb-2">날짜: {doc.metadata.date}</p>
+          )}
+          {doc.metadata?.filePath && (
+            <p className="mb-3">
+              <OriginalFileLink filePath={doc.metadata.filePath} />
+            </p>
           )}
           <pre className="text-sm text-zinc-300 whitespace-pre-wrap break-words font-sans">
             {doc.content ?? '(내용 없음)'}

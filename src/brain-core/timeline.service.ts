@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { MongoService } from '../mongo/mongo.service';
-import type { MemoryScope } from '../brain-schema';
+import type { MemoryScope } from '../schemas';
 
 export interface TimelineEntry {
   date: string;

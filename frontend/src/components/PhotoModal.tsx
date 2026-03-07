@@ -1,5 +1,6 @@
 import { useEffect, useCallback } from 'react';
-import { toPhotoUrl } from '../utils/photoUrl';
+import { toBrainDataFileUrl } from '../utils/brainDataUrl';
+import OriginalFileLink from './OriginalFileLink';
 import { getFileName } from '../utils/filePath';
 import { useDeleteMemory } from '../hooks/useDeleteMemory';
 import type { MemoryHit } from '../types/api';
@@ -71,7 +72,7 @@ export default function PhotoModal({ photo, onClose, onDeleted }: PhotoModalProp
         </button>
 
         <img
-          src={toPhotoUrl(photo.metadata.filePath)}
+          src={toBrainDataFileUrl(photo.metadata.filePath)}
           alt=""
           className="w-full h-auto max-h-[60vh] object-contain bg-zinc-800"
         />
@@ -105,8 +106,15 @@ export default function PhotoModal({ photo, onClose, onDeleted }: PhotoModalProp
             </div>
           )}
 
-          <div className="text-xs text-zinc-500 truncate" title={photo.metadata.filePath}>
-            {getFileName(photo.metadata.filePath)}
+          <div className="flex items-center gap-2 flex-wrap">
+            <span className="text-xs text-zinc-500 truncate" title={photo.metadata.filePath}>
+              {getFileName(photo.metadata.filePath)}
+            </span>
+            <OriginalFileLink
+              filePath={photo.metadata.filePath}
+              label="원본 열기"
+              className="text-xs text-blue-400 hover:text-blue-300 underline"
+            />
           </div>
 
           <div className="pt-3 border-t border-zinc-700 flex justify-end gap-2">

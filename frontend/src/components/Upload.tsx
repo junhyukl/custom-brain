@@ -2,6 +2,7 @@ import { useState, useRef } from 'react';
 import axios from 'axios';
 import { PHOTO_ACCEPT, DOCUMENT_ACCEPT } from '../constants';
 import { toErrorMessage } from '../utils/request';
+import { BatchUpload } from './batchUpload';
 
 type UploadType = 'photo' | 'document';
 
@@ -101,6 +102,8 @@ export default function Upload() {
           {message.text}
         </p>
       )}
+
+      <BatchUpload />
     </section>
   );
 }

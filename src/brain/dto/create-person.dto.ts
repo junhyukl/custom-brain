@@ -1,4 +1,4 @@
-import type { PersonRelation } from '../../brain-schema';
+import type { PersonRelation } from '../../schemas';
 
 export class CreatePersonDto {
   name!: string;

@@ -2,7 +2,7 @@ import { Controller, Get, Query } from '@nestjs/common';
 import { TimelineService } from '../brain-core/timeline.service';
 import { toErrorMessage } from '../common/error.util';
 import { DEFAULT_TIMELINE_LIMIT, parseLimit } from '../common/constants';
-import type { MemoryScope } from '../brain-schema';
+import type { MemoryScope } from '../schemas';
 import type { TimelineEntry } from '../brain-core/timeline.service';
 
 @Controller('brain')

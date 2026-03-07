@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { MongoService, type GraphEdge } from '../mongo/mongo.service';
 import { ObjectId } from 'mongodb';
-import type { Person, PersonRelation } from '../brain-schema';
+import type { Person, PersonRelation } from '../schemas';
 
 export interface FamilyTreeEntry {
   id: string;

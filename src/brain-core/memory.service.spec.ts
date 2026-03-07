@@ -3,6 +3,7 @@ import { MemoryService } from './memory.service';
 import { MongoService } from '../mongo/mongo.service';
 import { VectorStore } from '../vector/vectorStore';
 import { EmbeddingService } from '../brain-core/embedding.service';
+import { S3Service } from '../storage/s3.service';
 
 describe('MemoryService', () => {
   let service: MemoryService;
@@ -36,6 +37,7 @@ describe('MemoryService', () => {
         { provide: MongoService, useValue: mockMongo },
         { provide: VectorStore, useValue: mockVector },
         { provide: EmbeddingService, useValue: mockEmbedding },
+        { provide: S3Service, useValue: { deleteObject: jest.fn().mockResolvedValue(true) } },
       ],
     }).compile();
 

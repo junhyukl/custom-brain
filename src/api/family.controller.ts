@@ -3,7 +3,7 @@ import { FamilyService } from '../brain/family.service';
 import { CreatePersonDto } from '../brain/dto';
 import { toErrorMessage } from '../common/error.util';
 import type { FamilyTreeEntry, FamilyGraphResponse } from '../brain/family.service';
-import type { Person } from '../brain-schema';
+import type { Person } from '../schemas';
 
 @Controller('brain')
 export class FamilyController {

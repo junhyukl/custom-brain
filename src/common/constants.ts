@@ -7,6 +7,12 @@ export const DEFAULT_EMBEDDING_MODEL = 'nomic-embed-text';
 /** 벡터 차원 (nomic-embed-text) */
 export const EMBEDDING_DIMENSION = 768;
 
+/** 임베딩 입력 최대 문자 수 (context length 초과 방지). .env EMBED_MAX_INPUT_CHARS 로 변경 가능. 기본 2000 안전. */
+export const EMBED_MAX_INPUT_CHARS =
+  typeof process.env.EMBED_MAX_INPUT_CHARS !== 'undefined'
+    ? Math.max(500, Math.min(12000, parseInt(process.env.EMBED_MAX_INPUT_CHARS, 10) || 2000))
+    : 2_000;
+
 /** Qdrant 메모리 컬렉션명 */
 export const COLLECTION_MEMORY = 'memories';
 

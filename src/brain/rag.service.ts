@@ -2,7 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { MemoryService } from '../brain-core/memory.service';
 import { LlmClient } from '../llm/llmClient';
 import { DEFAULT_LLM_MODEL } from '../common/constants';
-import type { Memory } from '../brain-schema';
+import type { Memory } from '../schemas';
 
 @Injectable()
 export class RagService {

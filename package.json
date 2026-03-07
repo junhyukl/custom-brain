@@ -12,7 +12,8 @@
     "start": "nest start",
     "start:dev": "nest start --watch",
     "start:docker": "docker compose up -d qdrant mongo",
-    "start:all": "pnpm run start:docker || true && concurrently -n nest,ai,face \"pnpm run start:dev\" \"node scripts/run-ai-service.js\" \"node scripts/run-face-service.js\"",
+    "start:all": "node scripts/start-all.js",
+    "dev": "node scripts/start-all.js",
     "start:debug": "nest start --debug --watch",
     "start:prod": "node dist/main",
     "lint": "eslint \"{src,apps,libs,test}/**/*.ts\" --fix",
@@ -30,11 +31,14 @@
     "test:upload-photo": "ts-node -r tsconfig-paths/register scripts/test-upload-photo.ts",
     "test:upload-document": "ts-node -r tsconfig-paths/register scripts/test-upload-document.ts",
     "clear-timeline": "ts-node -r tsconfig-paths/register scripts/clear-timeline.ts",
+    "clear-all": "ts-node -r tsconfig-paths/register scripts/clear-all-data.ts",
     "test:docker": "node scripts/test-docker.js",
     "dev:ui": "pnpm -C frontend dev",
     "build:ui": "pnpm -C frontend build"
   },
   "dependencies": {
+    "@aws-sdk/client-s3": "^3.700.0",
+    "@aws-sdk/s3-request-presigner": "^3.700.0",
     "@nestjs/common": "^11.0.1",
     "@nestjs/core": "^11.0.1",
     "@nestjs/platform-express": "^11.0.1",
@@ -70,6 +74,8 @@
     "eslint-plugin-prettier": "^5.2.2",
     "globals": "^16.0.0",
     "jest": "^30.0.0",
+    "docx": "^9.5.0",
+    "pdf-lib": "^1.17.1",
     "prettier": "^3.4.2",
     "source-map-support": "^0.5.21",
     "supertest": "^7.0.0",
@@ -87,6 +93,11 @@
       "ts"
     ],
     "rootDir": "src",
+    "moduleNameMapper": {
+      "^@config/(.*)$": "<rootDir>/config/$1",
+      "^@common/(.*)$": "<rootDir>/common/$1",
+      "^@schemas/(.*)$": "<rootDir>/schemas/$1"
+    },
     "testRegex": ".*\\.spec\\.ts$",
     "transform": {
       "^.+\\.(t|j)s$": "ts-jest"

@@ -14,7 +14,9 @@ const python = fs.existsSync(venvPython)
   ? venvPython
   : fs.existsSync(venvPythonWin)
     ? venvPythonWin
-    : 'python3';
+    : process.platform === 'win32'
+      ? 'python'
+      : 'python3';
 
 const child = spawn(python, ['-m', 'uvicorn', 'app:app', '--host', '0.0.0.0', '--port', '8000'], {
   cwd: aiDir,

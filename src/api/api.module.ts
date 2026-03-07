@@ -7,6 +7,7 @@ import { SearchController } from './search.controller';
 import { TimelineController } from './timeline.controller';
 import { PhotoController } from './photo.controller';
 import { FamilyController } from './family.controller';
+import { FileController } from './file.controller';
 
 @Module({
   imports: [BrainCoreModule, BrainModule, IngestionModule],
@@ -16,6 +17,7 @@ import { FamilyController } from './family.controller';
     TimelineController,
     PhotoController,
     FamilyController,
+    FileController,
   ],
 })
 export class ApiModule {}

@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import axios from 'axios';
 import { API_SEARCH_LIMIT } from '../constants';
-import { toPhotoUrl } from '../utils/photoUrl';
+import { toBrainDataFileUrl } from '../utils/brainDataUrl';
 import { getFileName } from '../utils/filePath';
 import { toErrorMessage } from '../utils/request';
 import type { MemoryHit } from '../types/api';
@@ -102,7 +102,7 @@ export default function Search() {
           >
             {r.type === 'photo' && r.metadata?.filePath && (
               <img
-                src={toPhotoUrl(r.metadata.filePath)}
+                src={toBrainDataFileUrl(r.metadata.filePath)}
                 alt=""
                 className="w-full h-48 object-cover bg-zinc-800"
                 onError={(e) => {

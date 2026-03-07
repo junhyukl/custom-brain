@@ -42,9 +42,17 @@ export class UploadController {
     }
     const fileSize = file.buffer.length;
     try {
-      const filePath = await this.upload.saveFile(file.buffer, file.originalname, 'photo');
-      const result = await this.photoProcess.processPhoto(filePath, 'personal');
-      return { success: true, memoryId: result.memoryId, filePath: path.basename(filePath) };
+      const { pathForProcessing, filePathForMetadata } = await this.upload.saveFile(
+        file.buffer,
+        file.originalname,
+        'photo',
+      );
+      const result = await this.photoProcess.processPhoto(pathForProcessing, 'personal', {
+        metadataFilePath: filePathForMetadata,
+      });
+      await this.upload.cleanupTempPath(pathForProcessing);
+      const displayName = filePathForMetadata.includes('/') ? path.basename(filePathForMetadata) : path.basename(pathForProcessing);
+      return { success: true, memoryId: result.memoryId, filePath: displayName };
     } catch (err) {
       let message = toErrorMessage(err);
       console.error('[brain/upload/photo] fileSize=%s', fileSize, err instanceof Error ? err.stack : message);
@@ -72,8 +80,15 @@ export class UploadController {
       throw new BadRequestException(UPLOAD_NO_FILE_MSG);
     }
     try {
-      const filePath = await this.upload.saveFile(file.buffer, file.originalname, 'document');
-      const result = await this.documentProcess.processDocument(filePath, 'personal');
+      const { pathForProcessing, filePathForMetadata } = await this.upload.saveFile(
+        file.buffer,
+        file.originalname,
+        'document',
+      );
+      const result = await this.documentProcess.processDocument(pathForProcessing, 'personal', {
+        metadataFilePath: filePathForMetadata,
+      });
+      await this.upload.cleanupTempPath(pathForProcessing);
       if (!result) {
         return {
           success: false,

@@ -2,6 +2,8 @@ import { useCallback, useEffect, useState } from 'react';
 import axios from 'axios';
 import { API_TIMELINE_LIMIT } from '../constants';
 import { useDeleteMemory } from '../hooks/useDeleteMemory';
+import { toBrainDataFileUrl } from '../utils/brainDataUrl';
+import OriginalFileLink from './OriginalFileLink';
 import type { TimelineEntry, MemoryDetail } from '../types/api';
 
 function groupByYear(events: TimelineEntry[]): Map<string, TimelineEntry[]> {
@@ -145,6 +147,20 @@ export default function Timeline() {
                   <div className="text-xs font-medium text-zinc-500">
                     {detail.metadata?.date ?? (typeof detail.createdAt === 'string' ? detail.createdAt.slice(0, 10) : '')} · {detail.type} · {detail.scope}
                   </div>
+                  {detail.type === 'photo' && detail.metadata?.filePath && (
+                    <div className="mt-3 rounded-lg overflow-hidden bg-zinc-800">
+                      <img
+                        src={toBrainDataFileUrl(detail.metadata.filePath)}
+                        alt={detail.content?.slice(0, 80) ?? '사진'}
+                        className="w-full max-h-64 object-contain"
+                      />
+                    </div>
+                  )}
+                  {detail.metadata?.filePath && (detail.type === 'document' || detail.type === 'photo') && (
+                    <p className="mt-2">
+                      <OriginalFileLink filePath={detail.metadata.filePath} />
+                    </p>
+                  )}
                   <p className="text-zinc-300 text-sm mt-2 whitespace-pre-wrap">{detail.content}</p>
                 </>
               )}

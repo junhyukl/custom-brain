@@ -4,12 +4,14 @@ import fs from 'fs/promises';
 import { MongoService } from '../mongo/mongo.service';
 import { VectorStore } from '../vector/vectorStore';
 import { EmbeddingService } from './embedding.service';
+import { S3Service } from '../storage/s3.service';
+import { S3_REF_PREFIX } from '../config/storage.config';
 import {
   COLLECTION_MEMORY,
   EMBEDDING_DIMENSION,
   zeroVector,
 } from '../common/constants';
-import type { Memory, MemoryScope, MemoryType, MemoryMetadata } from '../brain-schema';
+import type { Memory, MemoryScope, MemoryType, MemoryMetadata } from '../schemas';
 
 @Injectable()
 export class MemoryService {
@@ -17,6 +19,7 @@ export class MemoryService {
     private readonly mongo: MongoService,
     private readonly vector: VectorStore,
     private readonly embedding: EmbeddingService,
+    private readonly s3: S3Service,
   ) {}
 
   private async ensureCollection(): Promise<void> {
@@ -34,10 +37,15 @@ export class MemoryService {
 
     const filePath = mem.metadata?.filePath;
     if (filePath) {
-      try {
-        await fs.unlink(filePath);
-      } catch {
-        // ignore if file already missing
+      if (filePath.startsWith(S3_REF_PREFIX)) {
+        const key = filePath.slice(S3_REF_PREFIX.length);
+        await this.s3.deleteObject(key);
+      } else {
+        try {
+          await fs.unlink(filePath);
+        } catch {
+          // ignore if file already missing
+        }
       }
     }
     await this.vector.delete(COLLECTION_MEMORY, [id]);

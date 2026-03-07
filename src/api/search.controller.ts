@@ -2,7 +2,7 @@ import { Body, Controller, Get, Post, Query } from '@nestjs/common';
 import { SearchService } from '../brain-core/search.service';
 import { toErrorMessage } from '../common/error.util';
 import { DEFAULT_SEARCH_LIMIT, parseLimit } from '../common/constants';
-import type { Memory, MemoryScope } from '../brain-schema';
+import type { Memory, MemoryScope } from '../schemas';
 
 @Controller('brain')
 export class SearchController {

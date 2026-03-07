@@ -2,7 +2,7 @@ import { Body, Controller, Delete, Get, Param, Post, Query } from '@nestjs/commo
 import { MemoryService } from '../brain-core/memory.service';
 import { CreateMemoryDto } from '../brain/dto';
 import { DEFAULT_RECALL_LIMIT, parseLimit } from '../common/constants';
-import type { Memory } from '../brain-schema';
+import type { Memory } from '../schemas';
 
 @Controller('brain')
 export class MemoryController {

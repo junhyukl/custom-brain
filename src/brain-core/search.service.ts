@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { MemoryService } from './memory.service';
-import type { Memory, MemoryScope } from '../brain-schema';
+import type { Memory, MemoryScope } from '../schemas';
 
 @Injectable()
 export class SearchService {
