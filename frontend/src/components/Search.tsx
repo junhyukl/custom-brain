@@ -5,8 +5,7 @@ import { toBrainDataFileUrl } from '../utils/brainDataUrl';
 import { getFileName } from '../utils/filePath';
 import { toErrorMessage } from '../utils/request';
 import type { MemoryHit } from '../types/api';
-import PhotoModal from './PhotoModal';
-import DocumentModal from './DocumentModal';
+import MemoryDetailModal from './MemoryDetailModal';
 
 export default function Search() {
   const [query, setQuery] = useState('');
@@ -14,8 +13,7 @@ export default function Search() {
   const [mode, setMode] = useState<'photos' | 'documents' | 'memory'>('photos');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [selectedPhoto, setSelectedPhoto] = useState<MemoryHit | null>(null);
-  const [selectedDocument, setSelectedDocument] = useState<MemoryHit | null>(null);
+  const [selectedMemoryId, setSelectedMemoryId] = useState<string | null>(null);
 
   const handleSearch = async () => {
     if (!query.trim()) return;
@@ -88,14 +86,10 @@ export default function Search() {
           <div
             key={r.id || i}
             className="border border-zinc-700 rounded-lg overflow-hidden bg-zinc-900 flex flex-col cursor-pointer hover:ring-2 hover:ring-blue-500 transition-shadow"
-            onClick={() => {
-              if (r.type === 'photo' && r.metadata?.filePath) setSelectedPhoto(r);
-              else setSelectedDocument(r);
-            }}
+            onClick={() => r.id && setSelectedMemoryId(r.id)}
             onKeyDown={(e) => {
               if (e.key !== 'Enter' && e.key !== ' ') return;
-              if (r.type === 'photo' && r.metadata?.filePath) setSelectedPhoto(r);
-              else setSelectedDocument(r);
+              if (r.id) setSelectedMemoryId(r.id);
             }}
             role="button"
             tabIndex={0}
@@ -135,20 +129,15 @@ export default function Search() {
         </p>
       )}
 
-      <PhotoModal
-        photo={selectedPhoto}
-        onClose={() => setSelectedPhoto(null)}
+      <MemoryDetailModal
+        memoryId={selectedMemoryId}
+        onClose={() => setSelectedMemoryId(null)}
         onDeleted={(id) => {
-          setSelectedPhoto(null);
+          setSelectedMemoryId(null);
           setResults((prev) => prev.filter((r) => r.id !== id));
         }}
-      />
-      <DocumentModal
-        doc={selectedDocument}
-        onClose={() => setSelectedDocument(null)}
-        onDeleted={(id) => {
-          setSelectedDocument(null);
-          setResults((prev) => prev.filter((r) => r.id !== id));
+        onSaved={() => {
+          // Optional: refetch or update local result if needed
         }}
       />
     </section>

@@ -26,6 +26,12 @@ export interface MemoryDetail {
   content: string;
   type: string;
   scope: string;
-  metadata: { date?: string; filePath?: string; people?: string[] };
+  metadata: { date?: string; filePath?: string; people?: string[]; location?: string };
   createdAt: string;
+}
+
+/** PATCH /brain/memory/:id body */
+export interface UpdateMemoryBody {
+  content?: string;
+  metadata?: { date?: string; people?: string[]; location?: string };
 }

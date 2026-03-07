@@ -30,4 +30,8 @@ export const STORAGE_CONFIG = {
     facesJson: path.join(BRAIN_DATA, 'family', 'faces.json'),
     facesSrc: path.join(BRAIN_DATA, 'family', 'faces_src'),
   },
+  /** 배치 업로드: 파일을 넣어두면 스케줄/스크립트가 처리. processed 하위로 이동 */
+  upload: {
+    dir: process.env.UPLOAD_FOLDER || path.join(BRAIN_DATA, 'upload'),
+  },
 };

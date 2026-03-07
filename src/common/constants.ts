@@ -42,9 +42,7 @@ export const NEO4J_USER = process.env.NEO4J_USER ?? 'neo4j';
 export const NEO4J_PASSWORD = process.env.NEO4J_PASSWORD ?? '';
 export const VISION_MODEL = process.env.VISION_MODEL ?? 'llava';
 
-/** Supported photo extensions for ingestion */
-export const PHOTO_EXTENSIONS = ['.jpg', '.jpeg', '.png', '.webp'];
-
+/** Photo extensions: use PHOTO_EXT_REGEX for matching */
 export const PHOTO_EXT_REGEX = /\.(jpg|jpeg|png|webp)$/i;
 
 /** Document extensions for ingestion (PDF, DOCX, TXT, MD) */

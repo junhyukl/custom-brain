@@ -192,4 +192,43 @@ export class MemoryService {
     );
     return result.modifiedCount === 1;
   }
+
+  /**
+   * 메모리 내용·메타데이터 수정. content 변경 시 재임베딩 후 Qdrant 업서트.
+   */
+  async update(
+    id: string,
+    payload: { content?: string; metadata?: Partial<MemoryMetadata> },
+  ): Promise<Memory | null> {
+    const existing = await this.getById(id);
+    if (!existing) return null;
+
+    const updates: Record<string, unknown> = {};
+    if (payload.content !== undefined) updates.content = payload.content;
+    if (payload.metadata !== undefined) {
+      const merged = { ...existing.metadata, ...payload.metadata };
+      for (const [k, v] of Object.entries(merged)) {
+        updates[`metadata.${k}`] = v;
+      }
+    }
+    if (!Object.keys(updates).length) return existing as Memory;
+
+    await this.mongo.getMemoryCollection().updateOne({ id }, { $set: updates });
+
+    if (payload.content !== undefined) {
+      await this.ensureCollection();
+      const embedding = await this.embedding.embed(payload.content);
+      const type = existing.type;
+      const scope = existing.scope;
+      await this.vector.upsert(COLLECTION_MEMORY, [
+        {
+          id,
+          vector: embedding.length ? embedding : zeroVector(),
+          payload: { type, scope, content: payload.content.slice(0, 500) },
+        },
+      ]);
+    }
+
+    return this.getById(id);
+  }
 }

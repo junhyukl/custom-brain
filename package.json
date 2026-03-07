@@ -32,6 +32,7 @@
     "test:upload-document": "ts-node -r tsconfig-paths/register scripts/test-upload-document.ts",
     "clear-timeline": "ts-node -r tsconfig-paths/register scripts/clear-timeline.ts",
     "clear-all": "ts-node -r tsconfig-paths/register scripts/clear-all-data.ts",
+    "batch-upload": "node scripts/batch-upload-from-folder.js",
     "test:docker": "node scripts/test-docker.js",
     "dev:ui": "pnpm -C frontend dev",
     "build:ui": "pnpm -C frontend build"

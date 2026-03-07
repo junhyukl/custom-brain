@@ -1,12 +1,12 @@
 /**
  * Ingest a folder: scan files and POST to custom-brain API.
  * Usage: npx ts-node -r tsconfig-paths/register scripts/ingest-folder.ts <folder>
- * Requires server running at BASE_URL (default http://localhost:3001).
+ * Requires server running at BASE_URL. Env: BRAIN_API_URL (default http://localhost:3001).
  */
 import fs from 'fs';
 import path from 'path';
 
-const BASE_URL = process.env.CUSTOM_BRAIN_URL ?? 'http://localhost:3001';
+const BASE_URL = process.env.BRAIN_API_URL ?? process.env.CUSTOM_BRAIN_URL ?? 'http://localhost:3001';
 
 async function ingestFile(filePath: string, scope: 'personal' | 'family'): Promise<void> {
   const ext = path.extname(filePath).toLowerCase();

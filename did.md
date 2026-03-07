@@ -35,6 +35,11 @@
   - `frontend/src/components/batchUpload/index.ts`: export.
   - `frontend/src/components/Upload.tsx`: 단일 업로드 아래 `<BatchUpload />` 통합.
 
+- **폴더 배치 잡 (batch-upload-from-folder)**
+  - `brain-data/upload`에 파일을 복사해 넣고 `pnpm run batch-upload` 실행 시 UI와 동일하게 `/brain/upload/photo`, `/brain/upload/document`로 전송.
+  - `scripts/batch-upload-from-folder.js`: 확장자별 분류, API 전송, 성공 시 `upload/processed/`로 이동. env: `UPLOAD_FOLDER`, `BRAIN_API_URL`.
+  - `brain-data/upload/`, `brain-data/upload/processed/` .gitkeep 추가. README·스크립트 요약에 반영.
+
 ---
 
 ## 4. 스크립트·실행

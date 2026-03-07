@@ -1,10 +1,8 @@
 import { useCallback, useEffect, useState } from 'react';
 import axios from 'axios';
 import { API_TIMELINE_LIMIT } from '../constants';
-import { useDeleteMemory } from '../hooks/useDeleteMemory';
-import { toBrainDataFileUrl } from '../utils/brainDataUrl';
-import OriginalFileLink from './OriginalFileLink';
-import type { TimelineEntry, MemoryDetail } from '../types/api';
+import MemoryDetailModal from './MemoryDetailModal';
+import type { TimelineEntry } from '../types/api';
 
 function groupByYear(events: TimelineEntry[]): Map<string, TimelineEntry[]> {
   const byYear = new Map<string, TimelineEntry[]>();
@@ -32,9 +30,6 @@ export default function Timeline() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [selectedMemoryId, setSelectedMemoryId] = useState<string | null>(null);
-  const [detail, setDetail] = useState<MemoryDetail | null>(null);
-  const [detailLoading, setDetailLoading] = useState(false);
-  const { deleteMemory, loading: deleteLoading } = useDeleteMemory();
 
   const loadTimeline = useCallback(() => {
     setLoading(true);
@@ -53,31 +48,6 @@ export default function Timeline() {
     window.addEventListener('memory-deleted', onMemoryDeleted);
     return () => window.removeEventListener('memory-deleted', onMemoryDeleted);
   }, [loadTimeline]);
-
-  useEffect(() => {
-    if (!selectedMemoryId) {
-      setDetail(null);
-      return;
-    }
-    setDetailLoading(true);
-    axios
-      .get<MemoryDetail | null>(`/brain/memory/${selectedMemoryId}`)
-      .then((res) => setDetail(res.data ?? null))
-      .catch(() => setDetail(null))
-      .finally(() => setDetailLoading(false));
-  }, [selectedMemoryId]);
-
-  const handleDelete = useCallback(() => {
-    const id = detail?.id ?? selectedMemoryId;
-    if (!id) return;
-    deleteMemory(id, {
-      onSuccess: () => {
-        setSelectedMemoryId(null);
-        setDetail(null);
-        loadTimeline();
-      },
-    });
-  }, [detail?.id, selectedMemoryId, deleteMemory, loadTimeline]);
 
   const byYear = groupByYear(events);
   const years = Array.from(byYear.keys()).sort((a, b) =>
@@ -123,71 +93,15 @@ export default function Timeline() {
         </div>
       )}
 
-      {selectedMemoryId && (
-        <div className="fixed inset-0 z-10 flex items-center justify-center bg-black/70 p-4" onClick={() => setSelectedMemoryId(null)}>
-          <div
-            className="bg-zinc-900 border border-zinc-700 rounded-xl max-w-lg w-full max-h-[85vh] shadow-xl flex flex-col"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <div className="flex justify-between items-center p-4 border-b border-zinc-700 shrink-0">
-              <h3 className="text-lg font-bold">상세</h3>
-              <button
-                type="button"
-                onClick={() => setSelectedMemoryId(null)}
-                className="text-zinc-400 hover:text-white p-1"
-                aria-label="닫기"
-              >
-                ✕
-              </button>
-            </div>
-            <div className="p-4 overflow-y-auto min-h-0 flex-1">
-              {detailLoading && <p className="text-zinc-500 text-sm py-4">불러오는 중…</p>}
-              {!detailLoading && detail && (
-                <>
-                  <div className="text-xs font-medium text-zinc-500">
-                    {detail.metadata?.date ?? (typeof detail.createdAt === 'string' ? detail.createdAt.slice(0, 10) : '')} · {detail.type} · {detail.scope}
-                  </div>
-                  {detail.type === 'photo' && detail.metadata?.filePath && (
-                    <div className="mt-3 rounded-lg overflow-hidden bg-zinc-800">
-                      <img
-                        src={toBrainDataFileUrl(detail.metadata.filePath)}
-                        alt={detail.content?.slice(0, 80) ?? '사진'}
-                        className="w-full max-h-64 object-contain"
-                      />
-                    </div>
-                  )}
-                  {detail.metadata?.filePath && (detail.type === 'document' || detail.type === 'photo') && (
-                    <p className="mt-2">
-                      <OriginalFileLink filePath={detail.metadata.filePath} />
-                    </p>
-                  )}
-                  <p className="text-zinc-300 text-sm mt-2 whitespace-pre-wrap">{detail.content}</p>
-                </>
-              )}
-              {!detailLoading && !detail && (
-                <p className="text-zinc-500 text-sm">메모리를 불러올 수 없습니다. 아래에서 삭제는 가능합니다.</p>
-              )}
-            </div>
-            <div className="p-4 border-t border-zinc-700 flex justify-end gap-2 shrink-0 bg-zinc-900 rounded-b-xl">
-              <button
-                type="button"
-                onClick={() => setSelectedMemoryId(null)}
-                className="px-4 py-2 rounded-lg border border-zinc-600 text-zinc-300 hover:bg-zinc-800"
-              >
-                닫기
-              </button>
-              <button
-                type="button"
-                onClick={handleDelete}
-                disabled={deleteLoading}
-                className="px-4 py-2 rounded-lg bg-red-600 text-white hover:bg-red-500 disabled:opacity-50"
-              >
-                {deleteLoading ? '삭제 중…' : '삭제'}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+      <MemoryDetailModal
+        memoryId={selectedMemoryId}
+        onClose={() => setSelectedMemoryId(null)}
+        onDeleted={() => {
+          setSelectedMemoryId(null);
+          loadTimeline();
+        }}
+        onSaved={() => loadTimeline()}
+      />
     </section>
   );
 }

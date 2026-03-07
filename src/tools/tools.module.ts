@@ -8,6 +8,7 @@ import { SearchPhotosTool } from './searchPhotos.tool';
 import { FamilyTreeTool } from './familyTree.tool';
 import { TimelineTool } from './timeline.tool';
 
+/** Nest-injectable tools for programmatic/agent use. HTTP client is in agent-tools/client-tools.ts (run-agent, OpenClaw). */
 @Module({
   imports: [BrainCoreModule, BrainModule],
   providers: [

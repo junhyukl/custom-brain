@@ -73,6 +73,9 @@ brain-data/family/history/*
 !brain-data/family/history/.gitkeep
 brain-data/family/faces_src/*
 !brain-data/family/faces_src/.gitkeep
+brain-data/upload/*
+!brain-data/upload/.gitkeep
+!brain-data/upload/processed/.gitkeep
 qdrant_storage/
 
 # Python (pip / venv)

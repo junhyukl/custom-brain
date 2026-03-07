@@ -1,5 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { Cron } from '@nestjs/schedule';
+import { toErrorMessage } from '../common/error.util';
 import { MemoryService } from '../brain-core/memory.service';
 import { EmbeddingService } from '../brain-core/embedding.service';
 import { TimelineService } from '../brain-core/timeline.service';
@@ -119,7 +120,7 @@ export class BrainOrganizeService {
       await this.generateSummaries();
       await this.updateKnowledgeGraph();
     } catch (err) {
-      console.error('[BrainOrganizeService] nightlyBrainUpdate failed:', err instanceof Error ? err.message : err);
+      console.error('[BrainOrganizeService] nightlyBrainUpdate failed:', toErrorMessage(err));
     }
   }
 }

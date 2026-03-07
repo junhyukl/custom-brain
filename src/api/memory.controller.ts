@@ -1,8 +1,13 @@
-import { Body, Controller, Delete, Get, Param, Post, Query } from '@nestjs/common';
+import { Body, Controller, Delete, Get, Param, Patch, Post, Query } from '@nestjs/common';
 import { MemoryService } from '../brain-core/memory.service';
 import { CreateMemoryDto } from '../brain/dto';
 import { DEFAULT_RECALL_LIMIT, parseLimit } from '../common/constants';
 import type { Memory } from '../schemas';
+
+export class UpdateMemoryDto {
+  content?: string;
+  metadata?: { date?: string; people?: string[]; location?: string };
+}
 
 @Controller('brain')
 export class MemoryController {
@@ -27,6 +32,17 @@ export class MemoryController {
   @Get('memory/:id')
   async getById(@Param('id') id: string): Promise<Memory | null> {
     return this.memory.getById(id);
+  }
+
+  @Patch('memory/:id')
+  async update(
+    @Param('id') id: string,
+    @Body() body: UpdateMemoryDto,
+  ): Promise<Memory | null> {
+    return this.memory.update(id, {
+      content: body.content,
+      metadata: body.metadata,
+    });
   }
 
   @Delete('memory/:id')

@@ -123,6 +123,14 @@ curl -X POST http://localhost:3001/brain/ask -H "Content-Type: application/json"
 
 - 웹 UI: `pnpm run dev:ui` → http://localhost:5173 에서 드래그 앤 드롭 업로드·검색·Timeline·Family Graph.
 
+**배치 업로드 (폴더)** — UI 일괄 업로드와 동일한 API로 처리:
+
+1. `brain-data/upload` 폴더에 사진(JPG/PNG/WebP)·문서(PDF/DOCX/TXT/MD) 파일을 복사.
+2. **자동**: 서버 실행 시 **3분마다** 해당 폴더를 스캔해 자동 처리 후 `upload/processed/` 로 이동.
+3. **수동**: `pnpm run batch-upload` 로 즉시 1회 실행 (서버 실행 중).
+
+환경 변수: `UPLOAD_FOLDER`(기본 `brain-data/upload`), `BRAIN_API_URL`(수동 스크립트용, 기본 `http://localhost:3001`).
+
 ### 4. 대량 수집 (Ingestion)
 
 | 명령 | 설명 |
@@ -197,6 +205,7 @@ curl -X POST http://localhost:3001/brain/ask -H "Content-Type: application/json"
 | `pnpm run ingest-photos` | 사진 스캔 → 얼굴·Vision·메모리 |
 | `pnpm run ingest-all` | 사진 + 문서 통합 스캔 |
 | `pnpm run ingest-all-parallel` | 병렬 수집 |
+| `pnpm run batch-upload` | `brain-data/upload` 폴더 파일 → /brain/upload/photo·document (서버 실행 중) |
 | `pnpm run build-face-db` | 얼굴 DB (faces_src → faces.json) |
 | `pnpm run build-timeline` | 타임라인 통계 |
 | `pnpm run run-agent` | 에이전트 예제 (질문 → 검색 → Ollama) |
