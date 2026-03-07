@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Post } from '@nestjs/common';
+import { Body, Controller, Get, Post, HttpException, HttpStatus } from '@nestjs/common';
 import { FamilyService } from '../brain/family.service';
 import { CreatePersonDto } from '../brain/dto';
 import { toErrorMessage } from '../common/error.util';
@@ -34,6 +34,12 @@ export class FamilyController {
 
   @Post('family/persons')
   async createPerson(@Body() body: CreatePersonDto): Promise<Person> {
-    return this.family.createPerson(body);
+    try {
+      return await this.family.createPerson(body);
+    } catch (err) {
+      const message = toErrorMessage(err);
+      console.error('[brain/family/persons]', message);
+      throw new HttpException({ error: message }, HttpStatus.INTERNAL_SERVER_ERROR);
+    }
   }
 }

@@ -14,6 +14,7 @@ import { IngestionModule } from './ingestion/ingestion.module';
 import { ApiModule } from './api/api.module';
 import { ToolsModule } from './tools/tools.module';
 import { UploadModule } from './upload/upload.module';
+import { HealthModule } from './health/health.module';
 
 @Module({
   imports: [
@@ -29,6 +30,7 @@ import { UploadModule } from './upload/upload.module';
     ApiModule,
     ToolsModule,
     UploadModule,
+    HealthModule,
   ],
   controllers: [AppController],
   providers: [AppService, TestRunnerService],

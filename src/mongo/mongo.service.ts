@@ -24,6 +24,16 @@ export class MongoService implements OnModuleInit, OnModuleDestroy {
     await this.client.connect();
   }
 
+  /** Health check: verify connection to MongoDB */
+  async ping(): Promise<boolean> {
+    try {
+      await this.db.admin().ping();
+      return true;
+    } catch {
+      return false;
+    }
+  }
+
   async onModuleDestroy() {
     await this.client.close();
   }

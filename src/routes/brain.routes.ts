@@ -1,4 +1,5 @@
-import { Body, Controller, Get, Post } from '@nestjs/common';
+import { Body, Controller, Get, Post, HttpException, HttpStatus } from '@nestjs/common';
+import { toErrorMessage } from '../common/error.util';
 import { AgentMemoryService } from '../brain/agentMemory.service';
 import { RagService } from '../brain/rag.service';
 import { MemoryEvaluatorService } from '../brain/memoryEvaluator.service';
@@ -19,12 +20,18 @@ export class BrainRoutes {
 
   @Post('chat')
   async chat(@Body() body: ChatDto) {
-    this.agentMemory.append('user', body.message);
-    const reply = await this.rag.query(body.message);
-    this.agentMemory.append('assistant', reply);
-    const turn = `User: ${body.message}\nAssistant: ${reply}`;
-    const { important, stored } = await this.memoryEvaluator.evaluateAndMaybeStore(turn);
-    return { reply, memory: { important, stored } };
+    try {
+      this.agentMemory.append('user', body.message);
+      const reply = await this.rag.query(body.message);
+      this.agentMemory.append('assistant', reply);
+      const turn = `User: ${body.message}\nAssistant: ${reply}`;
+      const { important, stored } = await this.memoryEvaluator.evaluateAndMaybeStore(turn);
+      return { reply, memory: { important, stored } };
+    } catch (err) {
+      const message = toErrorMessage(err);
+      console.error('[brain/chat]', message);
+      throw new HttpException({ error: message }, HttpStatus.INTERNAL_SERVER_ERROR);
+    }
   }
 
   @Get('memory')
@@ -34,16 +41,28 @@ export class BrainRoutes {
 
   @Post('ask')
   async ask(@Body() body: AskDto) {
-    const answer = await this.askBrain.askBrain(body.question);
-    this.agentMemory.append('user', body.question);
-    this.agentMemory.append('assistant', answer);
-    return { answer };
+    try {
+      const answer = await this.askBrain.askBrain(body.question);
+      this.agentMemory.append('user', body.question);
+      this.agentMemory.append('assistant', answer);
+      return { answer };
+    } catch (err) {
+      const message = toErrorMessage(err);
+      console.error('[brain/ask]', message);
+      throw new HttpException({ error: message }, HttpStatus.INTERNAL_SERVER_ERROR);
+    }
   }
 
   /** v3: Self-Learning — 클러스터·타임라인·지식그래프·요약 한 번에 실행 */
   @Post('organize')
   async organize() {
-    const result = await this.brainOrganize.organize();
-    return { status: 'brain organized', ...result };
+    try {
+      const result = await this.brainOrganize.organize();
+      return { status: 'brain organized', ...result };
+    } catch (err) {
+      const message = toErrorMessage(err);
+      console.error('[brain/organize]', message);
+      throw new HttpException({ error: message }, HttpStatus.INTERNAL_SERVER_ERROR);
+    }
   }
 }

@@ -172,7 +172,8 @@ curl -X POST http://localhost:3001/brain/ask -H "Content-Type: application/json"
 
 | Method | Path | Body / Query | 설명 |
 |--------|------|--------------|------|
-| GET | `/` | - | 헬스 체크 |
+| GET | `/` | - | Root (간단 응답) |
+| GET | `/health` | - | **헬스 체크** — Mongo·Qdrant 연결 확인. 200=정상, 503=일부 비가용 |
 | GET | `/test` | - | 테스트 러너 UI |
 | POST | `/test/run` | - | 테스트 실행 (pnpm run test) |
 | GET | `/brain/memory` | - | 세션 대화 목록 |
@@ -238,6 +239,7 @@ curl -X POST http://localhost:3001/brain/ask -H "Content-Type: application/json"
 | `FACE_SERVICE_URL` | (없음) | 얼굴 인식 서비스 (예: http://localhost:8001) |
 | `NEO4J_URI` | (없음) | v3 지식 그래프 (예: bolt://localhost:7687) |
 | `S3_BUCKET` | (없음) | 설정 시 업로드를 S3로 (S3_REGION, AWS_ACCESS_KEY_ID 등) |
+| `CORS_ORIGIN` | (없음) | 설정 시 CORS 허용 origin (쉼표 구분). 미설정 시 모든 origin 허용 (개발용) |
 
 `.env` 파일로 덮어쓰기 가능. 예시: `.env.example` 참고.
 
@@ -256,6 +258,7 @@ custom-brain/
 ├── scripts/              # ingest-*, build-face-db, build-timeline, test-upload-*
 └── src/
     ├── api/              # 컨트롤러 (memory, search, timeline, photo, family)
+    ├── health/           # GET /health (Mongo·Qdrant 연결 확인)
     ├── agent-tools/      # OpenClaw 툴
     ├── brain-core/       # memory, embedding, search, timeline
     ├── brain/             # chat, ask, RAG, 자동 메모리 평가

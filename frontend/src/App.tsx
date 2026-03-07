@@ -29,11 +29,20 @@ function App() {
       <h1 className="text-2xl font-bold mb-1">Personal + Family AI</h1>
       <p className="text-zinc-400 text-sm mb-4">업로드 · 검색 · 질문 · Timeline · Family Graph (Web + 모바일)</p>
 
-      <nav className="flex gap-1 mb-6 border-b border-zinc-700 pb-2 overflow-x-auto">
+      <nav
+        className="flex gap-1 mb-6 border-b border-zinc-700 pb-2 overflow-x-auto"
+        role="tablist"
+        aria-label="메인 메뉴"
+      >
         {TABS.map(({ id, label }) => (
           <button
             key={id}
             type="button"
+            role="tab"
+            id={`tab-${id}`}
+            aria-selected={activeTab === id}
+            aria-controls={`panel-${id}`}
+            tabIndex={activeTab === id ? 0 : -1}
             onClick={() => setActiveTab(id)}
             className={`px-4 py-2 rounded-t-lg text-sm font-medium whitespace-nowrap transition-colors ${
               activeTab === id
@@ -46,12 +55,18 @@ function App() {
         ))}
       </nav>
 
-      {activeTab === 'upload' && <Upload />}
-      {activeTab === 'search' && <Search />}
-      {activeTab === 'ask' && <Ask />}
-      {activeTab === 'memo' && <Memo />}
-      {activeTab === 'timeline' && <Timeline />}
-      {activeTab === 'family' && <FamilyGraph />}
+      <div
+        role="tabpanel"
+        id={`panel-${activeTab}`}
+        aria-labelledby={`tab-${activeTab}`}
+      >
+        {activeTab === 'upload' && <Upload />}
+        {activeTab === 'search' && <Search />}
+        {activeTab === 'ask' && <Ask />}
+        {activeTab === 'memo' && <Memo />}
+        {activeTab === 'timeline' && <Timeline />}
+        {activeTab === 'family' && <FamilyGraph />}
+      </div>
     </div>
   );
 }

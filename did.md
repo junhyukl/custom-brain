@@ -94,4 +94,17 @@
 
 ---
 
+---
+
+## 10. Pro 수준 분석 및 고도화
+
+- **분석**: 아키텍처·API·프론트·신뢰성·보안·성능·유지보수 관점으로 7개 영역 분석 보고서 작성.
+- **헬스 체크**: `GET /health` 추가. Mongo·Qdrant 연결 확인, 200=정상·503=비가용. `src/health/` (HealthService, HealthController, HealthModule), MongoService.ping() 추가.
+- **CORS**: `CORS_ORIGIN` env 설정 시 해당 origin만 허용(쉼표 구분). 미설정 시 기존처럼 모든 origin 허용.
+- **에러 처리**: BrainRoutes(chat, ask, organize)·FamilyController.createPerson에 try/catch 적용, toErrorMessage + HttpException으로 일관된 에러 응답.
+- **탭 a11y**: App.tsx 네비에 role="tablist", 각 버튼에 role="tab", aria-selected, aria-controls, tabpanel에 role="tabpanel", aria-labelledby 연결.
+- **문서**: README에 GET / (Root), GET /health (헬스 체크) 구분, 환경 변수 CORS_ORIGIN, 프로젝트 구조에 health/ 반영. .env.example에 CORS_ORIGIN 주석 추가.
+
+---
+
 *마지막 갱신: version1 브랜치 기준.*
