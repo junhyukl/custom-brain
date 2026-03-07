@@ -97,13 +97,14 @@ export default function MemoryDetailModal({
         setEditDate(res.data.metadata?.date ?? '');
         setEditPeople(Array.isArray(res.data.metadata?.people) ? res.data.metadata.people.join(', ') : '');
         onSaved?.(detail.id);
+        onClose();
       }
     } catch (err: unknown) {
       setSaveError(toErrorMessage(err));
     } finally {
       setSaving(false);
     }
-  }, [detail?.id, editContent, editDate, editPeople, onSaved]);
+  }, [detail?.id, editContent, editDate, editPeople, onSaved, onClose]);
 
   const handleDelete = useCallback(() => {
     if (!detail?.id) return;
