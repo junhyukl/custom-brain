@@ -4,15 +4,17 @@ import Timeline from './components/Timeline';
 import FamilyGraph from './components/FamilyGraph';
 import Upload from './components/Upload';
 import Ask from './components/Ask';
+import Memo from './components/Memo';
 
-type TabId = 'upload' | 'search' | 'ask' | 'timeline' | 'family';
+type TabId = 'upload' | 'search' | 'ask' | 'memo' | 'timeline' | 'family';
 
 const TABS: { id: TabId; label: string }[] = [
-  { id: 'upload', label: '업로드' },
+  { id: 'timeline', label: 'Timeline' },
   { id: 'search', label: '검색' },
   { id: 'ask', label: '질문' },
-  { id: 'timeline', label: 'Timeline' },
+  { id: 'memo', label: '메모' },
   { id: 'family', label: 'Family' },
+  { id: 'upload', label: '업로드' },
 ];
 
 /**
@@ -47,6 +49,7 @@ function App() {
       {activeTab === 'upload' && <Upload />}
       {activeTab === 'search' && <Search />}
       {activeTab === 'ask' && <Ask />}
+      {activeTab === 'memo' && <Memo />}
       {activeTab === 'timeline' && <Timeline />}
       {activeTab === 'family' && <FamilyGraph />}
     </div>

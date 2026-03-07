@@ -42,7 +42,9 @@ export default function Search() {
   return (
     <section className="p-4 border-b border-zinc-800">
       <h2 className="text-xl font-bold mb-2">검색</h2>
-      <p className="text-zinc-400 text-sm mb-3">사진, 문서, 메모 검색 (Qdrant + Memory Core)</p>
+      <p className="text-zinc-400 text-sm mb-3">
+        검색창에 입력한 단어·문장으로 <strong className="text-zinc-300">의미 검색</strong>합니다. 사진/문서/메모 탭에서 종류별로 볼 수 있습니다.
+      </p>
 
       <div className="flex flex-wrap gap-2 items-center mb-3">
         <input

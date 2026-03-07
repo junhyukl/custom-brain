@@ -47,7 +47,7 @@ export default function Ask() {
     <section className="p-4 border-b border-zinc-800">
       <h2 className="text-xl font-bold mb-2">질문</h2>
       <p className="text-zinc-400 text-sm mb-3">
-        브레인에 질문하면 메모리 검색 후 답변합니다. (POST /brain/ask)
+        질문하면 <strong className="text-zinc-300">메모·사진·문서</strong>를 검색한 뒤 그 내용을 바탕으로 답변합니다. 메모 탭에 저장한 내용도 여기서 활용됩니다.
       </p>
 
       <div className="flex gap-2 mb-4">
