@@ -3,12 +3,14 @@ import Search from './components/Search';
 import Timeline from './components/Timeline';
 import FamilyGraph from './components/FamilyGraph';
 import Upload from './components/Upload';
+import Ask from './components/Ask';
 
-type TabId = 'upload' | 'search' | 'timeline' | 'family';
+type TabId = 'upload' | 'search' | 'ask' | 'timeline' | 'family';
 
 const TABS: { id: TabId; label: string }[] = [
   { id: 'upload', label: '업로드' },
   { id: 'search', label: '검색' },
+  { id: 'ask', label: '질문' },
   { id: 'timeline', label: 'Timeline' },
   { id: 'family', label: 'Family' },
 ];
@@ -23,7 +25,7 @@ function App() {
   return (
     <div className="app max-w-7xl mx-auto px-4 py-4 pb-12 sm:p-6">
       <h1 className="text-2xl font-bold mb-1">Personal + Family AI</h1>
-      <p className="text-zinc-400 text-sm mb-4">업로드 · 검색 · Timeline · Family Graph (Web + 모바일)</p>
+      <p className="text-zinc-400 text-sm mb-4">업로드 · 검색 · 질문 · Timeline · Family Graph (Web + 모바일)</p>
 
       <nav className="flex gap-1 mb-6 border-b border-zinc-700 pb-2 overflow-x-auto">
         {TABS.map(({ id, label }) => (
@@ -44,6 +46,7 @@ function App() {
 
       {activeTab === 'upload' && <Upload />}
       {activeTab === 'search' && <Search />}
+      {activeTab === 'ask' && <Ask />}
       {activeTab === 'timeline' && <Timeline />}
       {activeTab === 'family' && <FamilyGraph />}
     </div>

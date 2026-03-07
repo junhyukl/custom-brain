@@ -35,6 +35,8 @@ export class BrainRoutes {
   @Post('ask')
   async ask(@Body() body: AskDto) {
     const answer = await this.askBrain.askBrain(body.question);
+    this.agentMemory.append('user', body.question);
+    this.agentMemory.append('assistant', answer);
     return { answer };
   }
 

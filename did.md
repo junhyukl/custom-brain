@@ -74,7 +74,16 @@
 
 ---
 
-## 8. Cursor 규칙 (작업 이력 참조)
+## 8. 질문(Ask) UI
+
+- **웹 UI "질문" 탭 복구**
+  - `frontend/src/components/Ask.tsx`: 질문 입력 → `POST /brain/ask` → 답변 표시, `GET /brain/memory`로 최근 대화(접기) 표시.
+  - `App.tsx`: 탭에 "질문"(ask) 추가.
+  - **백엔드**: `POST /brain/ask` 처리 시 질문/답변을 `AgentMemoryService`에 append하도록 수정 → `GET /brain/memory`에 질문·답변이 함께 나옴 (서버 재시작 전까지. 세션 메모리는 휘발성).
+
+---
+
+## 9. Cursor 규칙 (작업 이력 참조)
 
 - **`.cursor/rules/check-did.mdc`**: 사용자가 지시할 때 `did.md`를 먼저 확인하고, 이미 한 작업이 있으면 알려준 뒤 중복 없이 보완만 하도록 하는 규칙. `alwaysApply: true`.
 
