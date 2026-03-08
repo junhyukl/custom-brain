@@ -53,11 +53,18 @@ export class QdrantClient extends VectorStore {
     collection: string,
     vector: number[],
     limit = 10,
+    options?: { payloadType?: string; scoreThreshold?: number },
   ): Promise<Array<{ id: string; score: number; payload?: Record<string, unknown> }>> {
+    const filter =
+      options?.payloadType != null
+        ? { must: [{ key: 'type', match: { value: options.payloadType } }] }
+        : undefined;
     const result = await this.client.search(collection, {
       vector,
       limit,
       with_payload: true,
+      ...(filter && { filter }),
+      ...(options?.scoreThreshold != null && { score_threshold: options.scoreThreshold }),
     });
     return result.map((r) => ({
       id: String(r.id),

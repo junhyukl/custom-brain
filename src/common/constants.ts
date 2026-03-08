@@ -69,6 +69,9 @@ export function zeroVector(dimension = EMBEDDING_DIMENSION): number[] {
   return new Array(dimension).fill(0);
 }
 
+/** 벡터 검색 시 최소 유사도(코사인). 이하면 결과에서 제외해 무관한 결과 감소. */
+export const MIN_SEARCH_SCORE = 0.35;
+
 /** 업로드 최대 파일 크기 (25MB) */
 export const MAX_UPLOAD_BYTES = 25 * 1024 * 1024;
 

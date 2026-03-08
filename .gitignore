@@ -1,7 +1,26 @@
-# compiled output
+# ============================================================
+# Git에서 빼야 할 것 (이미 커밋된 경우: git rm -r --cached <경로>)
+# ============================================================
+# - node_modules/ (루트, frontend 등 모든 하위)
+# - frontend/dist/ (프론트 빌드 결과)
+# - .pnpm/, .pnpm-store/ (pnpm 캐시/스토어)
+# - **/.bin/ (실행 스크립트 링크)
+# - /dist, /build (루트 빌드)
+# - brain-data 내 실제 파일 (사진·문서·업로드 등), qdrant_storage
+# - .env, .venv, 로그, coverage, IDE 설정 일부
+# ============================================================
+
+# compiled output (root + frontend/subprojects)
 /dist
-/node_modules
 /build
+node_modules/
+**/node_modules/
+frontend/dist/
+# pnpm
+.pnpm/
+.pnpm-store/
+# bin 스크립트 (node_modules 내 .bin 등)
+**/.bin/
 
 # lockfiles (use pnpm; ignore npm)
 package-lock.json

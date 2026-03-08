@@ -101,7 +101,7 @@ export default function FamilyGraph() {
             <ForceGraph2D
               graphData={data}
               nodeId="id"
-              nodeLabel={(n) => `${(n as GraphNode).name} (${(n as GraphNode).relation ?? ''})`}
+              nodeLabel={(n: object) => `${(n as GraphNode).name} (${(n as GraphNode).relation ?? ''})`}
               nodeAutoColorBy="relation"
               linkDirectionalArrowLength={4}
               linkDirectionalArrowRelPos={1}

@@ -32,8 +32,17 @@ export async function bootstrap() {
   validateEnv();
   const app = await createApp();
   const port = parseInt(process.env.PORT ?? String(DEFAULT_PORT), 10);
-  await app.listen(port);
   const logger = new Logger('Bootstrap');
-  logger.log(`Application listening on port ${port}`);
-  return app;
+  try {
+    await app.listen(port);
+    logger.log(`Application listening on port ${port}`);
+    return app;
+  } catch (err: unknown) {
+    const code = (err as NodeJS.ErrnoException)?.code;
+    if (code === 'EADDRINUSE') {
+      logger.warn(`Port ${port} is already in use. Skipping listen.`);
+      process.exit(0);
+    }
+    throw err;
+  }
 }

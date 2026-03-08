@@ -9,6 +9,7 @@ import { S3_REF_PREFIX } from '../config/storage.config';
 import {
   COLLECTION_MEMORY,
   EMBEDDING_DIMENSION,
+  MIN_SEARCH_SCORE,
   zeroVector,
 } from '../common/constants';
 import type { Memory, MemoryScope, MemoryType, MemoryMetadata } from '../schemas';
@@ -143,13 +144,13 @@ export class MemoryService {
   }
 
   async search(query: string, limit = 10, scope?: MemoryScope): Promise<Memory[]> {
+    if (!query?.trim()) return [];
     await this.ensureCollection();
     const vector = await this.embedding.embed(query);
-    const hits = await this.vector.search(
-      COLLECTION_MEMORY,
-      vector.length ? vector : zeroVector(),
-      limit,
-    );
+    if (!vector.length) return [];
+    const hits = await this.vector.search(COLLECTION_MEMORY, vector, limit, {
+      scoreThreshold: MIN_SEARCH_SCORE,
+    });
     if (!hits.length) return [];
     const ids = hits.map((h) => h.id);
     const docs = await this.mongo.getMemoryCollection().find({ id: { $in: ids } }).toArray();
@@ -157,15 +158,38 @@ export class MemoryService {
     return ids.map((id) => byId.get(id)).filter(Boolean) as Memory[];
   }
 
-  /** 사진만 검색. type === 'photo' 인 메모리만 반환 (문서·메모 제외). */
+  /** 사진만 검색. Qdrant에서 type=photo 로 필터 + 유사도 임계값 적용. */
   async searchPhotos(query: string, limit = 10): Promise<Memory[]> {
-    const candidates = await this.search(query, limit * 3);
-    return candidates.filter((m) => m.type === 'photo').slice(0, limit);
+    if (!query?.trim()) return [];
+    await this.ensureCollection();
+    const vector = await this.embedding.embed(query);
+    if (!vector.length) return [];
+    const hits = await this.vector.search(COLLECTION_MEMORY, vector, limit, {
+      payloadType: 'photo',
+      scoreThreshold: MIN_SEARCH_SCORE,
+    });
+    if (!hits.length) return [];
+    const ids = hits.map((h) => h.id);
+    const docs = await this.mongo.getMemoryCollection().find({ id: { $in: ids } }).toArray();
+    const byId = new Map(docs.map((d) => [d.id, d]));
+    return ids.map((id) => byId.get(id)).filter(Boolean) as Memory[];
   }
 
+  /** 문서만 검색. Qdrant에서 type=document 로 필터 + 유사도 임계값 적용. */
   async searchDocuments(query: string, limit = 10): Promise<Memory[]> {
-    const candidates = await this.search(query, limit * 2);
-    return candidates.filter((m) => m.type === 'document').slice(0, limit);
+    if (!query?.trim()) return [];
+    await this.ensureCollection();
+    const vector = await this.embedding.embed(query);
+    if (!vector.length) return [];
+    const hits = await this.vector.search(COLLECTION_MEMORY, vector, limit, {
+      payloadType: 'document',
+      scoreThreshold: MIN_SEARCH_SCORE,
+    });
+    if (!hits.length) return [];
+    const ids = hits.map((h) => h.id);
+    const docs = await this.mongo.getMemoryCollection().find({ id: { $in: ids } }).toArray();
+    const byId = new Map(docs.map((d) => [d.id, d]));
+    return ids.map((id) => byId.get(id)).filter(Boolean) as Memory[];
   }
 
   async recall(limit = 50): Promise<Memory[]> {
