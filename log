@@ -1,0 +1,131 @@
+
+> custom-brain@0.0.1 start:all /home/junl/Documents/Z/custom-brain
+> node scripts/start-all.js
+
+
+> custom-brain@0.0.1 start:docker /home/junl/Documents/Z/custom-brain
+> docker compose up -d qdrant mongo
+
+ ELIFECYCLE  Command failed with exit code 1.
+[ui] node:internal/modules/esm/resolve:274
+[ui]     throw new ERR_MODULE_NOT_FOUND(
+[ui]           ^
+[ui] 
+[ui] Error [ERR_MODULE_NOT_FOUND]: Cannot find module '/home/junl/Documents/Z/custom-brain/frontend/node_modules/vite/dist/node/cli.js' imported from /home/junl/Documents/Z/custom-brain/frontend/node_modules/vite/bin/vite.js
+[ui] [90m    at finalizeResolution (node:internal/modules/esm/resolve:274:11)[39m
+[ui] [90m    at moduleResolve (node:internal/modules/esm/resolve:859:10)[39m
+[ui] [90m    at defaultResolve (node:internal/modules/esm/resolve:983:11)[39m
+[ui] [90m    at #cachedDefaultResolve (node:internal/modules/esm/loader:731:20)[39m
+[ui] [90m    at ModuleLoader.resolve (node:internal/modules/esm/loader:708:38)[39m
+[ui] [90m    at ModuleLoader.getModuleJobForImport (node:internal/modules/esm/loader:310:38)[39m
+[ui] [90m    at onImport.tracePromise.__proto__ (node:internal/modules/esm/loader:664:36)[39m
+[ui] [90m    at TracingChannel.tracePromise (node:diagnostics_channel:350:14)[39m
+[ui] [90m    at ModuleLoader.import (node:internal/modules/esm/loader:663:21)[39m
+[ui] [90m    at defaultImportModuleDynamicallyForModule (node:internal/modules/esm/utils:222:31)[39m {
+[ui]   code: [32m'ERR_MODULE_NOT_FOUND'[39m,
+[ui]   url: [32m'file:///home/junl/Documents/Z/custom-brain/frontend/node_modules/vite/dist/node/cli.js'[39m
+[ui] }
+[ui] 
+[ui] Node.js v22.22.0
+[ui] node scripts/run-ui.js exited with code 1
+[nest] 
+[nest] > custom-brain@0.0.1 start:dev /home/junl/Documents/Z/custom-brain
+[nest] > nest start --watch
+[nest] 
+[ai] INFO:     Started server process [651840]
+[ai] INFO:     Waiting for application startup.
+[ai] INFO:     Application startup complete.
+[ai] ERROR:    [Errno 98] error while attempting to bind on address ('0.0.0.0', 8000): address already in use
+[ai] INFO:     Waiting for application shutdown.
+[ai] INFO:     Application shutdown complete.
+[face] INFO:     Started server process [651842]
+[face] INFO:     Waiting for application startup.
+[face] INFO:     Application startup complete.
+[face] ERROR:    [Errno 98] error while attempting to bind on address ('0.0.0.0', 8001): address already in use
+[face] INFO:     Waiting for application shutdown.
+[face] INFO:     Application shutdown complete.
+[ai] node scripts/run-ai-service.js exited with code 1
+[face] node scripts/run-face-service.js exited with code 1
+[nest] [2J[3J[H[[90m4:18:57 PM[0m] Starting compilation in watch mode...
+[nest] 
+[nest] [[90m4:19:00 PM[0m] Found 0 errors. Watching for file changes.
+[nest] 
+[nest] [32m[Nest] 652063  - [39m03/07/2026, 4:19:00 PM [32m    LOG[39m [38;5;3m[NestFactory] [39m[32mStarting Nest application...[39m
+[nest] [32m[Nest] 652063  - [39m03/07/2026, 4:19:00 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mMongoModule dependencies initialized[39m[38;5;3m +15ms[39m
+[nest] [32m[Nest] 652063  - [39m03/07/2026, 4:19:00 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mVectorModule dependencies initialized[39m[38;5;3m +0ms[39m
+[nest] [32m[Nest] 652063  - [39m03/07/2026, 4:19:00 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mLlmModule dependencies initialized[39m[38;5;3m +1ms[39m
+[nest] [32m[Nest] 652063  - [39m03/07/2026, 4:19:00 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mStorageModule dependencies initialized[39m[38;5;3m +0ms[39m
+[nest] [32m[Nest] 652063  - [39m03/07/2026, 4:19:00 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mNeo4jModule dependencies initialized[39m[38;5;3m +0ms[39m
+[nest] [32m[Nest] 652063  - [39m03/07/2026, 4:19:00 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mDiscoveryModule dependencies initialized[39m[38;5;3m +0ms[39m
+[nest] [32m[Nest] 652063  - [39m03/07/2026, 4:19:00 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mAiServiceModule dependencies initialized[39m[38;5;3m +0ms[39m
+[nest] [32m[Nest] 652063  - [39m03/07/2026, 4:19:00 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mAppModule dependencies initialized[39m[38;5;3m +0ms[39m
+[nest] [32m[Nest] 652063  - [39m03/07/2026, 4:19:00 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mVisionModule dependencies initialized[39m[38;5;3m +0ms[39m
+[nest] [32m[Nest] 652063  - [39m03/07/2026, 4:19:00 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mScheduleModule dependencies initialized[39m[38;5;3m +1ms[39m
+[nest] [32m[Nest] 652063  - [39m03/07/2026, 4:19:00 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mBrainCoreModule dependencies initialized[39m[38;5;3m +0ms[39m
+[nest] [32m[Nest] 652063  - [39m03/07/2026, 4:19:00 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mIngestionModule dependencies initialized[39m[38;5;3m +0ms[39m
+[nest] [32m[Nest] 652063  - [39m03/07/2026, 4:19:00 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mHealthModule dependencies initialized[39m[38;5;3m +0ms[39m
+[nest] [32m[Nest] 652063  - [39m03/07/2026, 4:19:00 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mApiModule dependencies initialized[39m[38;5;3m +0ms[39m
+[nest] [32m[Nest] 652063  - [39m03/07/2026, 4:19:00 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mToolsModule dependencies initialized[39m[38;5;3m +0ms[39m
+[nest] [32m[Nest] 652063  - [39m03/07/2026, 4:19:00 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mBrainModule dependencies initialized[39m[38;5;3m +0ms[39m
+[nest] [32m[Nest] 652063  - [39m03/07/2026, 4:19:00 PM [32m    LOG[39m [38;5;3m[InstanceLoader] [39m[32mUploadModule dependencies initialized[39m[38;5;3m +0ms[39m
+[nest] [32m[Nest] 652063  - [39m03/07/2026, 4:19:00 PM [32m    LOG[39m [38;5;3m[RoutesResolver] [39m[32mAppController {/}:[39m[38;5;3m +2ms[39m
+[nest] [32m[Nest] 652063  - [39m03/07/2026, 4:19:00 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/, GET} route[39m[38;5;3m +2ms[39m
+[nest] [32m[Nest] 652063  - [39m03/07/2026, 4:19:00 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/test, GET} route[39m[38;5;3m +0ms[39m
+[nest] [32m[Nest] 652063  - [39m03/07/2026, 4:19:00 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/test/run, POST} route[39m[38;5;3m +0ms[39m
+[nest] [32m[Nest] 652063  - [39m03/07/2026, 4:19:00 PM [32m    LOG[39m [38;5;3m[RoutesResolver] [39m[32mBrainRoutes {/brain}:[39m[38;5;3m +0ms[39m
+[nest] [32m[Nest] 652063  - [39m03/07/2026, 4:19:00 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/brain/chat, POST} route[39m[38;5;3m +0ms[39m
+[nest] [32m[Nest] 652063  - [39m03/07/2026, 4:19:00 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/brain/memory, GET} route[39m[38;5;3m +0ms[39m
+[nest] [32m[Nest] 652063  - [39m03/07/2026, 4:19:00 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/brain/ask, POST} route[39m[38;5;3m +0ms[39m
+[nest] [32m[Nest] 652063  - [39m03/07/2026, 4:19:00 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/brain/organize, POST} route[39m[38;5;3m +0ms[39m
+[nest] [32m[Nest] 652063  - [39m03/07/2026, 4:19:00 PM [32m    LOG[39m [38;5;3m[RoutesResolver] [39m[32mMemoryController {/brain}:[39m[38;5;3m +0ms[39m
+[nest] [32m[Nest] 652063  - [39m03/07/2026, 4:19:00 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/brain/memory, POST} route[39m[38;5;3m +0ms[39m
+[nest] [32m[Nest] 652063  - [39m03/07/2026, 4:19:00 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/brain/memory/recall, GET} route[39m[38;5;3m +0ms[39m
+[nest] [32m[Nest] 652063  - [39m03/07/2026, 4:19:00 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/brain/memory/:id, GET} route[39m[38;5;3m +1ms[39m
+[nest] [32m[Nest] 652063  - [39m03/07/2026, 4:19:00 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/brain/memory/:id, PATCH} route[39m[38;5;3m +0ms[39m
+[nest] [32m[Nest] 652063  - [39m03/07/2026, 4:19:00 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/brain/memory/:id, DELETE} route[39m[38;5;3m +0ms[39m
+[nest] [32m[Nest] 652063  - [39m03/07/2026, 4:19:00 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/brain/memories/clear, DELETE} route[39m[38;5;3m +0ms[39m
+[nest] [32m[Nest] 652063  - [39m03/07/2026, 4:19:00 PM [32m    LOG[39m [38;5;3m[RoutesResolver] [39m[32mSearchController {/brain}:[39m[38;5;3m +0ms[39m
+[nest] [32m[Nest] 652063  - [39m03/07/2026, 4:19:00 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/brain/memory/search, GET} route[39m[38;5;3m +0ms[39m
+[nest] [32m[Nest] 652063  - [39m03/07/2026, 4:19:00 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/brain/search, POST} route[39m[38;5;3m +0ms[39m
+[nest] [32m[Nest] 652063  - [39m03/07/2026, 4:19:00 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/brain/photos/search, GET} route[39m[38;5;3m +1ms[39m
+[nest] [32m[Nest] 652063  - [39m03/07/2026, 4:19:00 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/brain/documents/search, GET} route[39m[38;5;3m +0ms[39m
+[nest] [32m[Nest] 652063  - [39m03/07/2026, 4:19:00 PM [32m    LOG[39m [38;5;3m[RoutesResolver] [39m[32mTimelineController {/brain}:[39m[38;5;3m +0ms[39m
+[nest] [32m[Nest] 652063  - [39m03/07/2026, 4:19:00 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/brain/timeline, GET} route[39m[38;5;3m +0ms[39m
+[nest] [32m[Nest] 652063  - [39m03/07/2026, 4:19:00 PM [32m    LOG[39m [38;5;3m[RoutesResolver] [39m[32mPhotoController {/brain}:[39m[38;5;3m +0ms[39m
+[nest] [32m[Nest] 652063  - [39m03/07/2026, 4:19:00 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/brain/photo/analyze, POST} route[39m[38;5;3m +0ms[39m
+[nest] [32m[Nest] 652063  - [39m03/07/2026, 4:19:00 PM [32m    LOG[39m [38;5;3m[RoutesResolver] [39m[32mFamilyController {/brain}:[39m[38;5;3m +0ms[39m
+[nest] [32m[Nest] 652063  - [39m03/07/2026, 4:19:00 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/brain/family/graph, GET} route[39m[38;5;3m +0ms[39m
+[nest] [32m[Nest] 652063  - [39m03/07/2026, 4:19:00 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/brain/family/tree, GET} route[39m[38;5;3m +0ms[39m
+[nest] [32m[Nest] 652063  - [39m03/07/2026, 4:19:00 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/brain/family/persons, POST} route[39m[38;5;3m +0ms[39m
+[nest] [32m[Nest] 652063  - [39m03/07/2026, 4:19:00 PM [32m    LOG[39m [38;5;3m[RoutesResolver] [39m[32mFileController {/brain}:[39m[38;5;3m +0ms[39m
+[nest] [32m[Nest] 652063  - [39m03/07/2026, 4:19:00 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/brain/file, GET} route[39m[38;5;3m +0ms[39m
+[nest] [32m[Nest] 652063  - [39m03/07/2026, 4:19:00 PM [32m    LOG[39m [38;5;3m[RoutesResolver] [39m[32mUploadController {/brain/upload}:[39m[38;5;3m +0ms[39m
+[nest] [32m[Nest] 652063  - [39m03/07/2026, 4:19:00 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/brain/upload/photo, POST} route[39m[38;5;3m +1ms[39m
+[nest] [32m[Nest] 652063  - [39m03/07/2026, 4:19:00 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/brain/upload/document, POST} route[39m[38;5;3m +0ms[39m
+[nest] [32m[Nest] 652063  - [39m03/07/2026, 4:19:00 PM [32m    LOG[39m [38;5;3m[RoutesResolver] [39m[32mHealthController {/}:[39m[38;5;3m +0ms[39m
+[nest] [32m[Nest] 652063  - [39m03/07/2026, 4:19:00 PM [32m    LOG[39m [38;5;3m[RouterExplorer] [39m[32mMapped {/health, GET} route[39m[38;5;3m +0ms[39m
+[nest] [32m[Nest] 652063  - [39m03/07/2026, 4:19:00 PM [32m    LOG[39m [38;5;3m[NestApplication] [39m[32mNest application successfully started[39m[38;5;3m +19ms[39m
+[nest] [31m[Nest] 652063  - [39m03/07/2026, 4:19:00 PM [31m  ERROR[39m [38;5;3m[NestApplication] [39m[31mError: listen EADDRINUSE: address already in use :::3001[39m[38;5;3m +1ms[39m
+[nest] node:net:1940
+[nest]     const ex = new UVExceptionWithHostPort(err, 'listen', address, port);
+[nest]                ^
+[nest] 
+[nest] Error: listen EADDRINUSE: address already in use :::3001
+[nest]     at Server.setupListenHandle [as _listen2] (node:net:1940:16)
+[nest]     at listenInCluster (node:net:1997:12)
+[nest]     at Server.listen (node:net:2102:7)
+[nest]     at ExpressAdapter.listen (/home/junl/Documents/Z/custom-brain/node_modules/.pnpm/@nestjs+platform-express@11.1.15_@nestjs+common@11.1.15_reflect-metadata@0.2.2_rxjs@7.8.2__@nestjs+core@11.1.15/node_modules/@nestjs/platform-express/adapters/express-adapter.js:127:32)
+[nest]     at /home/junl/Documents/Z/custom-brain/node_modules/.pnpm/@nestjs+core@11.1.15_@nestjs+common@11.1.15_reflect-metadata@0.2.2_rxjs@7.8.2__@nestjs+platfo_7uejj5ohtjwudaplym2sub44ka/node_modules/@nestjs/core/nest-application.js:188:30
+[nest]     at new Promise (<anonymous>)
+[nest]     at NestApplication.listen (/home/junl/Documents/Z/custom-brain/node_modules/.pnpm/@nestjs+core@11.1.15_@nestjs+common@11.1.15_reflect-metadata@0.2.2_rxjs@7.8.2__@nestjs+platfo_7uejj5ohtjwudaplym2sub44ka/node_modules/@nestjs/core/nest-application.js:178:16)
+[nest]     at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+[nest]     at async bootstrap (/home/junl/Documents/Z/custom-brain/src/app.ts:21:3) {
+[nest]   code: 'EADDRINUSE',
+[nest]   errno: -98,
+[nest]   syscall: 'listen',
+[nest]   address: '::',
+[nest]   port: 3001
+[nest] }
+[nest] 
+[nest] Node.js v22.22.0
+[nest] pnpm run start:dev exited with code SIGINT
