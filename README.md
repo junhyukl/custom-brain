@@ -258,6 +258,7 @@ curl -X POST http://localhost:3001/brain/ask -H "Content-Type: application/json"
 ```
 custom-brain/
 ├── brain-data/           # personal/{notes,documents,projects,photos,voice}, family/{photos,faces_src,faces.json}
+├── deploy/               # Ubuntu 배포: install-ubuntu.sh, setup-app.sh, systemd (deploy/README.md)
 ├── docker/               # docker-compose.yml (Qdrant, Mongo, ai-service, Neo4j)
 ├── face-models/          # face-api 모델 (수동 다운로드)
 ├── frontend/             # 웹 UI (React)

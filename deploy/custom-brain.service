@@ -1,0 +1,23 @@
+# systemd unit — Nest API (custom-brain)
+# 설치: sudo cp deploy/custom-brain.service /etc/systemd/system/
+#       sudo sed -i "s|/opt/custom-brain|$(pwd)|g" /etc/systemd/system/custom-brain.service  # 또는 실제 경로로 수정
+#       sudo systemctl daemon-reload && sudo systemctl enable custom-brain && sudo systemctl start custom-brain
+
+[Unit]
+Description=Custom Brain API (NestJS)
+After=network.target docker.service
+Wants=docker.service
+
+[Service]
+Type=simple
+User=www-data
+Group=www-data
+WorkingDirectory=/opt/custom-brain
+Environment=NODE_ENV=production
+EnvironmentFile=/opt/custom-brain/.env
+ExecStart=/usr/bin/node dist/main.js
+Restart=on-failure
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target
