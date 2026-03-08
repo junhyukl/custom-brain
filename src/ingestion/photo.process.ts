@@ -53,29 +53,73 @@ export class PhotoProcessService {
   ): Promise<ProcessPhotoResult> {
     const ai = await this.aiService.analyzePhoto(filePath);
     const caption = ai.caption || 'Photo (no caption)';
-    const people = ai.people || [];
-    const embedding = ai.embedding?.length ? ai.embedding : undefined;
+    let people: string[] = ai.people || [];
+    let personIds: string[] = [];
+
+    if (this.faceService.isAvailable()) {
+      try {
+        const detected = await this.faceService.detectFromPath(filePath);
+        for (const face of detected) {
+          const matched = await this.faceService.findPerson(face.embedding);
+          let personId: string;
+          let personName: string;
+          if (matched) {
+            personId = matched.personId;
+            personName = matched.personName;
+          } else {
+            const person = await this.familyService.createPerson({
+              name: `Unknown_${Date.now()}`,
+              relation: 'child',
+            });
+            personId = person.id;
+            personName = person.name;
+            await this.faceService.storeFace(face.embedding, personId, personName, metadataFilePath);
+          }
+          personIds.push(personId);
+          people.push(personName);
+        }
+        for (let i = 0; i < personIds.length; i++) {
+          for (let j = i + 1; j < personIds.length; j++) {
+            await this.familyService.addPhotoTogetherEdge(personIds[i], personIds[j], metadataFilePath);
+          }
+        }
+      } catch {
+        // face pipeline 실패 시 캡션만으로 진행
+      }
+    }
 
     await this.familyService.updatePeople(people);
     await this.familyGraphService.updatePeople(people);
+    const embedding = ai.embedding?.length ? ai.embedding : undefined;
     const memory = embedding?.length
       ? await this.memory.storeWithVector(caption, embedding, {
           type: 'photo',
           scope,
-          metadata: { filePath: metadataFilePath, people: people.length ? people : undefined },
+          metadata: {
+            filePath: metadataFilePath,
+            people: people.length ? people : undefined,
+            personIds: personIds.length ? personIds : undefined,
+          },
         })
       : await this.memory.store(caption, {
           type: 'photo',
           scope,
-          metadata: { filePath: metadataFilePath, people: people.length ? people : undefined },
+          metadata: {
+            filePath: metadataFilePath,
+            people: people.length ? people : undefined,
+            personIds: personIds.length ? personIds : undefined,
+          },
         });
+    for (const name of people) {
+      await this.familyGraphService.linkPersonToPhoto(name, memory.id);
+    }
     await this.timelineService.addEvent(caption, scope);
 
     return {
       memoryId: memory.id,
       description: caption,
       faces: people.map((name) => ({ name, confidence: 1 })),
-      personIds: undefined,
+      personIds: personIds.length ? personIds : undefined,
     };
   }
 
@@ -99,8 +143,11 @@ export class PhotoProcessService {
 
     if (this.faceService.isAvailable()) {
       try {
-        const buffer = await fs.readFile(filePath);
-        const detected = await this.faceService.detectFromBuffer(buffer);
+        let detected = await this.faceService.detectFromPath(filePath);
+        if (!detected.length) {
+          const buffer = await fs.readFile(filePath);
+          detected = await this.faceService.detectFromBuffer(buffer);
+        }
         for (const face of detected) {
           const matched = await this.faceService.findPerson(face.embedding);
           let personId: string;
@@ -163,6 +210,9 @@ export class PhotoProcessService {
         location: exifLocation,
       },
     });
+    for (const name of people) {
+      await this.familyGraphService.linkPersonToPhoto(name, memory.id);
+    }
 
     return {
       memoryId: memory.id,

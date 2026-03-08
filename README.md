@@ -10,7 +10,7 @@ NestJS 기반 **개인화 AI 브레인** API. 메모리 검색·저장, RAG, 자
 |------|------|
 | **채팅·질의** | `POST /brain/chat`, `POST /brain/ask` — RAG + 자동 메모리 평가(Important? → store/ignore) |
 | **메모리·검색** | 벡터 검색, 메모리/사진/문서 검색, 타임라인 (Qdrant + MongoDB) |
-| **업로드** | 사진(JPG/PNG/WebP), 문서(PDF/DOCX/TXT/MD) → 저장·추출·임베딩·메모리 자동 반영 |
+| **업로드** | 사진(JPG/PNG/WebP), 문서(PDF/DOCX/TXT/MD), **음성**(MP3/WAV 등 → Whisper STT → 메모리) → 저장·추출·임베딩·메모리 자동 반영 |
 | **대량 수집** | 폴더 스캔 → 얼굴 인식·Vision·임베딩 → `ingest-photos` / `ingest-all` / `ingest-all-parallel` |
 | **가족** | 가족 트리·구성원 API, (선택) 얼굴 인식 → Family Graph |
 | **v3 Self-Learning** | `POST /brain/organize` — 클러스터·타임라인·지식 그래프·요약. 매일 새벽 cron |
@@ -120,6 +120,7 @@ curl -X POST http://localhost:3001/brain/ask -H "Content-Type: application/json"
 |------|--------|------|------|
 | 사진 업로드 | POST | `/brain/upload/photo` | multipart `file` — JPG/PNG/WebP. EXIF·Vision·Embedding·Qdrant·Mongo |
 | 문서 업로드 | POST | `/brain/upload/document` | multipart `file` — **PDF/DOCX/TXT/MD**. 텍스트 추출·Embedding·Qdrant·Mongo |
+| **음성 업로드** | POST | `/brain/upload/voice` | multipart `file` + 선택 `speaker`. **MP3/WAV/M4A 등** → ai-service Whisper STT → 텍스트 메모리 저장. `AI_SERVICE_URL` 필요. |
 
 - 웹 UI: `pnpm run dev:ui` → http://localhost:5173 에서 드래그 앤 드롭 업로드·검색·Timeline·Family Graph.
 
@@ -190,6 +191,7 @@ curl -X POST http://localhost:3001/brain/ask -H "Content-Type: application/json"
 | POST | `/brain/photo/analyze` | `{ "image": "base64...", "date?", "people?" }` | 사진 분석 후 메모리 저장 |
 | POST | `/brain/upload/photo` | multipart `file` | 사진 업로드 |
 | POST | `/brain/upload/document` | multipart `file` | 문서 업로드 (PDF/DOCX/TXT/MD) |
+| POST | `/brain/upload/voice` | multipart `file`, body `speaker?` | 음성 업로드 → Whisper STT → 메모리 |
 | POST | `/brain/organize` | - | v3 정리 1회 실행 |
 
 ---
@@ -235,7 +237,8 @@ curl -X POST http://localhost:3001/brain/ask -H "Content-Type: application/json"
 | `VISION_MODEL` | `llava` | 사진 설명 모델 |
 | `EMBED_MAX_INPUT_CHARS` | `2000` | 임베딩 입력 최대 문자 (초과 시 1000 등으로 조정) |
 | `FACE_MODEL_PATH` | `./face-models` | face-api 모델 폴더 |
-| `AI_SERVICE_URL` | (없음) | Python ai-service (예: http://localhost:8000) |
+| `AI_SERVICE_URL` | (없음) | Python ai-service (예: http://localhost:8000). 음성 STT·Vision·v3 등에 사용 |
+| `WHISPER_MODEL` | (ai-service) `base` | Whisper 모델 (base/small/medium/large). ai-service의 `/transcribe`에서 사용 |
 | `FACE_SERVICE_URL` | (없음) | 얼굴 인식 서비스 (예: http://localhost:8001) |
 | `NEO4J_URI` | (없음) | v3 지식 그래프 (예: bolt://localhost:7687) |
 | `S3_BUCKET` | (없음) | 설정 시 업로드를 S3로 (S3_REGION, AWS_ACCESS_KEY_ID 등) |
@@ -243,13 +246,15 @@ curl -X POST http://localhost:3001/brain/ask -H "Content-Type: application/json"
 
 `.env` 파일로 덮어쓰기 가능. 예시: `.env.example` 참고.
 
+**서비스별 env**: ai-service — `HUGGINGFACE_TOKEN` 또는 `PYANNOTE_TOKEN` (pyannote 화자 구분 시). face-service — `INSIGHTFACE_GPU=1` (CUDA 사용 시). Neo4j 설정 시 사진·음성 메모리가 Person–APPEARS_IN/SPOKE–Memory 그래프로 연결됨.
+
 ---
 
 ## 프로젝트 구조
 
 ```
 custom-brain/
-├── brain-data/           # personal/{notes,documents,projects,photos}, family/{photos,faces_src,faces.json}
+├── brain-data/           # personal/{notes,documents,projects,photos,voice}, family/{photos,faces_src,faces.json}
 ├── docker/               # docker-compose.yml (Qdrant, Mongo, ai-service, Neo4j)
 ├── face-models/          # face-api 모델 (수동 다운로드)
 ├── frontend/             # 웹 UI (React)
@@ -281,6 +286,8 @@ custom-brain/
 - **연결**: `pnpm run test:docker` (Qdrant, MongoDB, Ollama)
 - **업로드**: `pnpm run test:upload-photo`, `pnpm run test:upload-document` (백엔드 실행 중)
 - **테스트 UI**: 서버 실행 후 http://localhost:3001/test → "Run tests"
+
+**테스터 검증**: 코드 수정이 있으면 변경된 기능에 대해 테스터가 반드시 검증해야 합니다. (관련 규칙: `.cursor/rules/tester-after-change.mdc`)
 
 ---
 

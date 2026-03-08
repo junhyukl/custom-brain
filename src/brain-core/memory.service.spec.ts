@@ -102,4 +102,22 @@ describe('MemoryService', () => {
       expect(results[0].id).toBe('1');
     });
   });
+
+  describe('searchPhotos', () => {
+    it('returns only type === photo (excludes document and memo)', async () => {
+      mockVector.search.mockResolvedValueOnce([{ id: '1' }, { id: '2' }, { id: '3' }]);
+      mockMongo.getMemoryCollection().find.mockReturnValueOnce({
+        toArray: jest.fn().mockResolvedValue([
+          { id: '1', content: 'photo caption', type: 'photo', scope: 'personal', metadata: {}, createdAt: new Date() },
+          { id: '2', content: 'doc text', type: 'document', scope: 'personal', metadata: {}, createdAt: new Date() },
+          { id: '3', content: 'memo', type: 'note', scope: 'personal', metadata: {}, createdAt: new Date() },
+        ]),
+      });
+
+      const results = await service.searchPhotos('beach', 10);
+      expect(results).toHaveLength(1);
+      expect(results[0].type).toBe('photo');
+      expect(results[0].id).toBe('1');
+    });
+  });
 });

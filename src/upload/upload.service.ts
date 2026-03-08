@@ -6,7 +6,9 @@ import { STORAGE_CONFIG, S3_REF_PREFIX } from '../config/storage.config';
 import {
   PHOTO_EXT_REGEX,
   DOCUMENT_EXT_REGEX,
+  VOICE_EXT_REGEX,
   ALLOWED_DOC_EXT_MSG,
+  ALLOWED_VOICE_EXT_MSG,
 } from '../common/constants';
 import { S3Service } from '../storage/s3.service';
 
@@ -16,6 +18,43 @@ export interface SaveFileResult {
   /** 메모리 메타데이터에 저장할 값. 로컬이면 경로, S3면 s3:key */
   filePathForMetadata: string;
 }
+
+export type UploadFileType = 'photo' | 'document' | 'voice';
+
+const UPLOAD_TYPE_CONFIG: Record<
+  UploadFileType,
+  {
+    extRegex: RegExp;
+    defaultExt: string;
+    errMsg: string;
+    s3KeyPrefix: string;
+    localDir: string;
+    s3ContentType?: string;
+  }
+> = {
+  photo: {
+    extRegex: PHOTO_EXT_REGEX,
+    defaultExt: '.jpg',
+    errMsg: '',
+    s3KeyPrefix: 'personal/photos',
+    localDir: STORAGE_CONFIG.personal.photos,
+    s3ContentType: 'image/jpeg',
+  },
+  document: {
+    extRegex: DOCUMENT_EXT_REGEX,
+    defaultExt: '.txt',
+    errMsg: `지원하지 않는 문서 형식입니다. ${ALLOWED_DOC_EXT_MSG}`,
+    s3KeyPrefix: 'personal/documents',
+    localDir: STORAGE_CONFIG.personal.documents,
+  },
+  voice: {
+    extRegex: VOICE_EXT_REGEX,
+    defaultExt: '.mp3',
+    errMsg: `지원하지 않는 음성 형식입니다. ${ALLOWED_VOICE_EXT_MSG}`,
+    s3KeyPrefix: 'personal/voice',
+    localDir: STORAGE_CONFIG.personal.voice,
+  },
+};
 
 @Injectable()
 export class UploadService {
@@ -28,42 +67,29 @@ export class UploadService {
   async saveFile(
     buffer: Buffer,
     originalname: string,
-    type: 'photo' | 'document',
+    type: UploadFileType,
   ): Promise<SaveFileResult> {
-    const ext = path.extname(originalname) || (type === 'photo' ? '.jpg' : '.txt');
-    if (type === 'document' && !DOCUMENT_EXT_REGEX.test(ext)) {
-      throw new BadRequestException(
-        `지원하지 않는 문서 형식입니다. ${ALLOWED_DOC_EXT_MSG}`,
-      );
+    const config = UPLOAD_TYPE_CONFIG[type];
+    const ext = path.extname(originalname) || config.defaultExt;
+    if (config.errMsg && !config.extRegex.test(ext)) {
+      throw new BadRequestException(config.errMsg);
     }
-    const safeExt =
-      type === 'photo' && PHOTO_EXT_REGEX.test(ext)
-        ? ext
-        : type === 'document'
-          ? ext
-          : type === 'photo'
-            ? '.jpg'
-            : '.txt';
+    const safeExt = config.extRegex.test(ext) ? ext : config.defaultExt;
     const name = `${Date.now()}-${Math.random().toString(36).slice(2, 10)}${safeExt}`;
 
     if (STORAGE_CONFIG.useS3) {
-      const key = type === 'photo' ? `personal/photos/${name}` : `personal/documents/${name}`;
+      const key = `${config.s3KeyPrefix}/${name}`;
       const tmpPath = path.join(os.tmpdir(), `custom-brain-upload-${name}`);
       await fs.writeFile(tmpPath, buffer);
-      const uploaded = await this.s3.upload(buffer, key, type === 'photo' ? 'image/jpeg' : undefined);
+      const uploaded = await this.s3.upload(buffer, key, config.s3ContentType);
       if (uploaded) {
-        return {
-          pathForProcessing: tmpPath,
-          filePathForMetadata: S3_REF_PREFIX + key,
-        };
+        return { pathForProcessing: tmpPath, filePathForMetadata: S3_REF_PREFIX + key };
       }
       await fs.unlink(tmpPath).catch(() => {});
-      // S3 실패 시 로컬로 fallback
     }
 
-    const dir = type === 'photo' ? STORAGE_CONFIG.personal.photos : STORAGE_CONFIG.personal.documents;
-    await fs.mkdir(dir, { recursive: true });
-    const filePath = path.join(dir, name);
+    await fs.mkdir(config.localDir, { recursive: true });
+    const filePath = path.join(config.localDir, name);
     await fs.writeFile(filePath, buffer);
     return { pathForProcessing: filePath, filePathForMetadata: filePath };
   }

@@ -48,6 +48,10 @@ export const PHOTO_EXT_REGEX = /\.(jpg|jpeg|png|webp)$/i;
 /** Document extensions for ingestion (PDF, DOCX, TXT, MD) */
 export const DOCUMENT_EXT_REGEX = /\.(pdf|docx|txt|md)$/i;
 
+/** Voice/audio extensions for STT (Whisper). mp3, wav, m4a, webm, ogg, flac */
+export const VOICE_EXT_REGEX = /\.(mp3|wav|m4a|webm|ogg|flac)$/i;
+export const ALLOWED_VOICE_EXT_MSG = '지원 형식: MP3, WAV, M4A, WebM, OGG, FLAC';
+
 /** Zero vector for missing embeddings (same dimension as model output). */
 export function zeroVector(dimension = EMBEDDING_DIMENSION): number[] {
   return new Array(dimension).fill(0);
@@ -67,6 +71,10 @@ export function parseLimit(value: string | undefined, fallback: number): number 
   const n = Number(value);
   return Number.isNaN(n) ? fallback : n;
 }
+
+/** 외부 HTTP 호출 타임아웃 (ms). ai-service, face-service, Ollama 등 */
+export const HTTP_TIMEOUT_DEFAULT = 30_000;
+export const HTTP_TIMEOUT_LONG = 120_000;
 
 /** 업로드 API 사용자 메시지 */
 export const ALLOWED_DOC_EXT_MSG = '지원 형식: PDF, DOCX, TXT, MD';

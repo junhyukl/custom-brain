@@ -31,6 +31,10 @@ class AnalyzePhotoBody(BaseModel):
     path: str = ""
 
 
+class TranscribeBody(BaseModel):
+    path: str = ""
+
+
 class EmbedBody(BaseModel):
     text: str = ""
 
@@ -106,6 +110,68 @@ async def analyze_photo(
 def embed(body: EmbedBody):
     """텍스트 → 벡터 (nomic-embed-text)."""
     return {"vector": _embed_text(body.text)}
+
+
+# --- Voice: Whisper STT ---
+_whisper_model = None
+
+
+def _get_whisper_model():
+    global _whisper_model
+    if _whisper_model is None:
+        import whisper
+        _whisper_model = whisper.load_model(os.environ.get("WHISPER_MODEL", "base"))
+    return _whisper_model
+
+
+def _run_diarization(path: str) -> list[dict]:
+    """Optional speaker diarization (pyannote). Requires HUGGINGFACE_TOKEN. Returns [{speaker, start, end}]."""
+    token = os.environ.get("HUGGINGFACE_TOKEN") or os.environ.get("PYANNOTE_TOKEN")
+    if not token:
+        return []
+    try:
+        from pyannote.audio import Pipeline
+        pipeline = Pipeline.from_pretrained(
+            "pyannote/speaker-diarization-3.1",
+            use_auth_token=token,  # pyannote 3.x; huggingface_hub uses token= in newer versions
+        )
+        diar = pipeline(path)
+        segments = []
+        for turn, _, speaker in diar.itertracks(yield_label=True):
+            segments.append({"speaker": speaker, "start": round(turn.start, 2), "end": round(turn.end, 2)})
+        return segments
+    except Exception:
+        return []
+
+
+@app.post("/transcribe")
+def transcribe(body: TranscribeBody):
+    """음성 파일 경로 → Whisper STT → 텍스트. Nest에서 voice 업로드 후 path 전달."""
+    path = (body.path or "").strip()
+    if not path or not Path(path).exists():
+        return {"text": "", "error": "path required and must exist"}
+    try:
+        model = _get_whisper_model()
+        result = model.transcribe(path)
+        return {"text": (result.get("text") or "").strip()}
+    except Exception as e:
+        return {"text": "", "error": str(e)}
+
+
+@app.post("/transcribe-with-speakers")
+def transcribe_with_speakers(body: TranscribeBody):
+    """Whisper STT + 선택적 화자 구분(pyannote). HUGGINGFACE_TOKEN 있으면 segments 반환."""
+    path = (body.path or "").strip()
+    if not path or not Path(path).exists():
+        return {"text": "", "segments": [], "error": "path required and must exist"}
+    try:
+        model = _get_whisper_model()
+        result = model.transcribe(path)
+        text = (result.get("text") or "").strip()
+        segments = _run_diarization(path)
+        return {"text": text, "segments": segments}
+    except Exception as e:
+        return {"text": "", "segments": [], "error": str(e)}
 
 
 @app.get("/health")

@@ -37,6 +37,43 @@ export class AiServiceClient {
     return data;
   }
 
+  /** 음성 파일 경로 → Whisper STT → 텍스트. AI_SERVICE_URL 서버가 해당 path를 읽을 수 있어야 함. */
+  async transcribe(filePath: string): Promise<string> {
+    if (!this.baseURL) return '';
+    try {
+      const { data } = await axios.post<{ text?: string; error?: string }>(
+        `${this.baseURL}/transcribe`,
+        { path: filePath },
+        { timeout: 120_000 },
+      );
+      if (data.error) return '';
+      return (data.text ?? '').trim();
+    } catch {
+      return '';
+    }
+  }
+
+  /** Whisper STT + 선택적 화자 구분(pyannote). segments는 HUGGINGFACE_TOKEN 있을 때만. */
+  async transcribeWithSpeakers(
+    filePath: string,
+  ): Promise<{ text: string; segments: { speaker: string; start: number; end: number }[] }> {
+    if (!this.baseURL) return { text: '', segments: [] };
+    try {
+      const { data } = await axios.post<{
+        text?: string;
+        segments?: { speaker: string; start: number; end: number }[];
+        error?: string;
+      }>(`${this.baseURL}/transcribe-with-speakers`, { path: filePath }, { timeout: 180_000 });
+      if (data.error) return { text: '', segments: [] };
+      return {
+        text: (data.text ?? '').trim(),
+        segments: data.segments ?? [],
+      };
+    } catch {
+      return { text: '', segments: [] };
+    }
+  }
+
   /** 텍스트 → 벡터 (검색용 쿼리 임베딩 등) */
   async embed(text: string): Promise<number[]> {
     const { data } = await axios.post<{ vector: number[] }>(

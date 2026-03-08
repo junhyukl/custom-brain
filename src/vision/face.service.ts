@@ -45,6 +45,21 @@ export class FaceService {
     }
   }
 
+  /** 로컬 파일 경로로 Face Service 분석 (동일 호스트/공유 볼륨). 대용량·이중 읽기 방지. */
+  async detectFromPath(filePath: string): Promise<DetectedFace[]> {
+    if (!FACE_SERVICE_URL) return [];
+    try {
+      const res = await axios.post<{ faces: DetectedFace[]; error?: string }>(
+        `${FACE_SERVICE_URL}/analyze-face`,
+        { path: filePath },
+        { timeout: 30_000 },
+      );
+      return res.data.faces ?? [];
+    } catch {
+      return [];
+    }
+  }
+
   /** Qdrant faces 컬렉션 준비 */
   private async ensureFacesCollection(): Promise<void> {
     await this.vector.ensureCollection(COLLECTION_FACES, FACE_EMBEDDING_DIMENSION);

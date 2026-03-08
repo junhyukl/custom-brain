@@ -9,7 +9,11 @@ jest.mock('fs/promises');
 jest.mock('../config/storage.config', () => ({
   STORAGE_CONFIG: {
     useS3: false,
-    personal: { photos: '/tmp/brain-photos', documents: '/tmp/brain-docs' },
+    personal: {
+      photos: '/tmp/brain-photos',
+      documents: '/tmp/brain-docs',
+      voice: '/tmp/brain-voice',
+    },
   },
   S3_REF_PREFIX: 's3:',
 }));

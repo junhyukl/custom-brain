@@ -9,6 +9,7 @@
 | 문서 | 설명 |
 |------|------|
 | **[ARCHITECTURE.md](ARCHITECTURE.md)** | **통합 아키텍처** — 시스템 구성, 업로드/얼굴·가족/v3 파이프라인, 프로젝트 구조, 환경 변수·Docker, API 요약 |
+| **[PRO_ANALYSIS.md](PRO_ANALYSIS.md)** | **Pro 수준 분석** — 10개 관점(아키텍처·API·코드품질·보안·성능·테스트·운영·프론트·데이터·유지보수) 분석 및 리팩터링 우선순위 |
 | **[openclaw/custom-brain/SKILL.md](openclaw/custom-brain/SKILL.md)** | **OpenClaw 스킬** — baseUrl, ask/chat/memory, Agent Tools(searchMemory, searchPhotos, searchDocuments, timeline, familyTree) |
 
 ---

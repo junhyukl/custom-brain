@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Post, HttpException, HttpStatus } from '@nestjs/common';
+import { Body, Controller, Get, Post, HttpException, HttpStatus, Logger } from '@nestjs/common';
 import { toErrorMessage } from '../common/error.util';
 import { AgentMemoryService } from '../brain/agentMemory.service';
 import { RagService } from '../brain/rag.service';
@@ -10,6 +10,8 @@ import { AskDto } from '../brain/dto/ask.dto';
 
 @Controller('brain')
 export class BrainRoutes {
+  private readonly logger = new Logger(BrainRoutes.name);
+
   constructor(
     private readonly agentMemory: AgentMemoryService,
     private readonly rag: RagService,
@@ -29,7 +31,7 @@ export class BrainRoutes {
       return { reply, memory: { important, stored } };
     } catch (err) {
       const message = toErrorMessage(err);
-      console.error('[brain/chat]', message);
+      this.logger.warn(`chat failed: ${message}`);
       throw new HttpException({ error: message }, HttpStatus.INTERNAL_SERVER_ERROR);
     }
   }
@@ -48,7 +50,7 @@ export class BrainRoutes {
       return { answer };
     } catch (err) {
       const message = toErrorMessage(err);
-      console.error('[brain/ask]', message);
+      this.logger.warn(`ask failed: ${message}`);
       throw new HttpException({ error: message }, HttpStatus.INTERNAL_SERVER_ERROR);
     }
   }
@@ -61,7 +63,7 @@ export class BrainRoutes {
       return { status: 'brain organized', ...result };
     } catch (err) {
       const message = toErrorMessage(err);
-      console.error('[brain/organize]', message);
+      this.logger.warn(`organize failed: ${message}`);
       throw new HttpException({ error: message }, HttpStatus.INTERNAL_SERVER_ERROR);
     }
   }

@@ -157,9 +157,10 @@ export class MemoryService {
     return ids.map((id) => byId.get(id)).filter(Boolean) as Memory[];
   }
 
+  /** 사진만 검색. type === 'photo' 인 메모리만 반환 (문서·메모 제외). */
   async searchPhotos(query: string, limit = 10): Promise<Memory[]> {
-    const candidates = await this.search(query, limit * 2, 'family');
-    return candidates.filter((m) => m.type === 'photo' || m.type === 'document').slice(0, limit);
+    const candidates = await this.search(query, limit * 3);
+    return candidates.filter((m) => m.type === 'photo').slice(0, limit);
   }
 
   async searchDocuments(query: string, limit = 10): Promise<Memory[]> {

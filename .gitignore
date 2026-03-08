@@ -65,6 +65,8 @@ brain-data/personal/documents/*
 !brain-data/personal/documents/.gitkeep
 brain-data/personal/notes/*
 !brain-data/personal/notes/.gitkeep
+brain-data/personal/voice/*
+!brain-data/personal/voice/.gitkeep
 brain-data/family/photos/*
 !brain-data/family/photos/.gitkeep
 brain-data/family/documents/*

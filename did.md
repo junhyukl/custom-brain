@@ -107,4 +107,76 @@
 
 ---
 
+---
+
+## 11. Voice Memory (음성 메모리)
+
+- **스키마·설정**
+  - `MemoryType`에 `'voice'` 추가, `MemoryMetadata`에 선택 `speaker` 추가. `STORAGE_CONFIG.personal.voice` 경로, `VOICE_EXT_REGEX`(mp3, wav, m4a, webm, ogg, flac) 상수.
+- **업로드**
+  - `POST /brain/upload/voice`: multipart `file` + 선택 body `speaker`. 저장 → ai-service Whisper STT → 텍스트를 메모리로 저장(type: voice, metadata.filePath, metadata.speaker). `AI_SERVICE_URL` 미설정 시 안내 메시지 반환.
+- **ai-service**
+  - `POST /transcribe`: body `{ "path": "<로컬 파일 경로>" }` → Whisper로 음성→텍스트, `{ "text": "..." }` 반환. env `WHISPER_MODEL`(기본 `base`).
+- **프론트엔드**
+  - 업로드 UI에 "음성 (MP3/WAV/M4A 등 → Whisper STT)" 블록: 파일 선택 + 선택 입력 "화자(예: 아버지)".
+- **기타**
+  - `brain-data/personal/voice/` .gitkeep 추가, `.gitignore`에 `brain-data/personal/voice/*` 제외 규칙. 배치 업로드·3분 스캔에는 음성 미포함(수동 업로드·API만).
+
+---
+
+## 12. 프로덕션 수준 Face Recognition + Voice Memory + Neo4j 그래프
+
+- **Face (InsightFace)**
+  - **face-service**: `POST /analyze-face` 추가 — body `{ "path": "..." }` 로컬 경로로 분석(동일 호스트/공유 볼륨). `INSIGHTFACE_GPU=1` 시 CUDA 시도. 기존 `POST /detect`(multipart) 유지.
+  - **Nest FaceService**: `detectFromPath(filePath)` 추가 → face-service `/analyze-face` 호출. 사진 파이프라인에서 경로 있으면 path 우선 사용 후 필요 시 buffer fallback.
+  - **사진 파이프라인**: AI Service 경로(processPhotoViaAiService)에서도 FACE_SERVICE_URL 있으면 얼굴 검출·매칭·미등록 시 자동 인물 생성 및 Qdrant faces 등록. Legacy 경로에서도 `detectFromPath` 우선, 실패 시 `detectFromBuffer`.
+- **Neo4j Person–Memory 연결**
+  - **FamilyGraphService**: `linkPersonToPhoto(personName, memoryId)` — `(Person)-[:APPEARS_IN]->(Memory)`, `linkPersonToVoice(personName, memoryId)` — `(Person)-[:SPOKE]->(Memory)`. 메모리 저장 시 타입별로 호출.
+  - 사진 업로드 후 메모리 저장 시 등장 인물별 `linkPersonToPhoto` 호출. 음성 업로드 시 화자(speaker) 있으면 `linkPersonToVoice` 호출.
+- **Voice + 화자 구분**
+  - **ai-service**: `POST /transcribe-with-speakers` — Whisper STT + 선택적 pyannote.audio 화자 구분. `HUGGINGFACE_TOKEN` 또는 `PYANNOTE_TOKEN` 있으면 `segments: [{ speaker, start, end }]` 반환. 의존성: `pyannote-audio`, `torch`.
+  - **Nest**: 음성 업로드 시 `transcribeWithSpeakers` 사용, 실패 시 `transcribe` fallback. 메타데이터에 `speaker`(폼 입력) 또는 diarization 결과 `speakers`(SPEAKER_00 등) 저장. 화자 이름이 있으면 Neo4j `SPOKE` 연결.
+- **스키마**
+  - `MemoryMetadata`에 `speakers?: string[]` 추가(화자 구분 목록).
+- **테스트**
+  - `family-graph.service.spec.ts`: `linkPersonToPhoto`, `linkPersonToVoice` 호출 검증 및 빈 이름/메모리 ID·Neo4j 비가용 시 no-op 검증.
+
+---
+
+## 13. Face + Voice + Family Graph 모듈형 시스템 (ai_family_system)
+
+- **모듈형 Python 패키지** `ai_family_system/`
+  - config, face(face_detect, face_recognize, face_database), voice(voice_record, speech_to_text, voice_memory), memory(memory_store), family_graph(graph_db, family_relation), utils/logger.
+  - Nest API·Face-service·AI-service·Neo4j 연동; 로컬 fallback(로컬 DB, Whisper, Neo4j 직접).
+  - `main.py`: `--camera` 루프 또는 `--image` + `--audio` 파일 기반 1회.
+- **Nest**
+  - `POST /brain/face/match`: body `{ embedding }` → FaceService.findPerson → `{ personId, personName }` (ai_family_system 연동).
+  - `POST /brain/family/graph/relation`: body `{ from, relation, to }` → FamilyGraphService.addRelation (화이트리스트: FATHER, MOTHER, BROTHER 등).
+  - **Voice → Graph 자동 연결**: 음성 업로드 후 화자(speaker) 있으면 `relation-extract.util`로 텍스트에서 관계 추출 → `addRelation` 호출 (예: "my father is Mike" → John -[FATHER]-> Mike).
+- **relation-extract.util**: 정규식 기반 관계 추출, `extractRelationsFromText(speaker, text)` → `[{ from, relation, to }]`.
+- **테스트**: `family-graph.service.spec.ts`에 addRelation 검증, `relation-extract.util.spec.ts` 추가.
+
+---
+
+## 14. Pro 10인급 분석 및 리팩터링·고도화
+
+- **분석 문서** `docs/PRO_ANALYSIS.md`
+  - 10개 관점: 아키텍처, API 설계, 코드 품질, 보안, 성능, 테스트, 운영·DevOps, 프론트엔드, 데이터·DB, 유지보수. 각 영역별 현황·개선 방향·우선순위 표 정리.
+- **Global Exception Filter** `src/common/http-exception.filter.ts`
+  - 모든 예외를 `{ success: false, error, code? }` 형식으로 통일. HttpException 시 기존 response body 유지(health 503 등). 비Http 예외는 500 + toErrorMessage.
+- **Bootstrap**
+  - `validateEnv()`: PORT 유효성(1–65535) 검사, 실패 시 시작 중단. `createApp()`에 `useGlobalFilters(GlobalExceptionFilter)` 적용. 시작 시 Logger로 listen 포트 출력.
+- **공통 타입** `src/common/api-response.types.ts`
+  - ApiErrorResponse, ApiSuccessResponse, ApiResponse, isApiError.
+- **상수**
+  - `HTTP_TIMEOUT_DEFAULT`, `HTTP_TIMEOUT_LONG` (외부 호출 타임아웃 참조용).
+- **MemoryController**
+  - POST /memory: content 필수·비어 있으면 BadRequestException. create/delete/clearAll에 try/catch → HttpException으로 일관된 에러 응답.
+- **BrainRoutes**
+  - Nest Logger 주입, console.error 대신 logger.warn으로 chat/ask/organize 실패 로깅.
+- **문서**
+  - `docs/README.md`에 PRO_ANALYSIS.md 링크 추가.
+
+---
+
 *마지막 갱신: version1 브랜치 기준.*

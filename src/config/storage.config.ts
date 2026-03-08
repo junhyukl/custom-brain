@@ -21,6 +21,7 @@ export const STORAGE_CONFIG = {
     documents: path.join(BRAIN_DATA, 'personal', 'documents'),
     projects: path.join(BRAIN_DATA, 'personal', 'projects'),
     photos: path.join(BRAIN_DATA, 'personal', 'photos'),
+    voice: path.join(BRAIN_DATA, 'personal', 'voice'),
   },
   family: {
     photos: path.join(BRAIN_DATA, 'family', 'photos'),

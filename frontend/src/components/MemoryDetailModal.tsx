@@ -23,6 +23,7 @@ export default function MemoryDetailModal({
 }: MemoryDetailModalProps) {
   const [detail, setDetail] = useState<MemoryDetail | null>(null);
   const [loading, setLoading] = useState(false);
+  const [loadError, setLoadError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
   const [editContent, setEditContent] = useState('');
@@ -33,6 +34,7 @@ export default function MemoryDetailModal({
   const loadDetail = useCallback(async (id: string) => {
     setLoading(true);
     setSaveError(null);
+    setLoadError(null);
     try {
       const res = await axios.get<MemoryDetail | null>(`/brain/memory/${id}`);
       const d = res.data ?? null;
@@ -42,8 +44,9 @@ export default function MemoryDetailModal({
         setEditDate(d.metadata?.date ?? '');
         setEditPeople(Array.isArray(d.metadata?.people) ? d.metadata.people.join(', ') : '');
       }
-    } catch {
+    } catch (err: unknown) {
       setDetail(null);
+      setLoadError(toErrorMessage(err));
     } finally {
       setLoading(false);
     }
@@ -53,6 +56,7 @@ export default function MemoryDetailModal({
     if (!memoryId) {
       setDetail(null);
       setSaveError(null);
+      setLoadError(null);
       return;
     }
     loadDetail(memoryId);
@@ -152,7 +156,10 @@ export default function MemoryDetailModal({
           {loading && <p className="text-zinc-500 text-sm py-4">불러오는 중…</p>}
 
           {!loading && !detail && (
-            <p className="text-zinc-500 text-sm">메모리를 불러올 수 없습니다.</p>
+            <div className="text-zinc-500 text-sm">
+              <p>메모리를 불러올 수 없습니다.</p>
+              {loadError && <p className="mt-2 text-red-400 text-xs">{loadError}</p>}
+            </div>
           )}
 
           {!loading && detail && (

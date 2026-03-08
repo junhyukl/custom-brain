@@ -24,15 +24,23 @@ export class TimelineService {
     const col = this.mongo.getMemoryCollection();
     const filter = scope ? { scope } : {};
     const docs = await col.find(filter).sort({ createdAt: 1 }).limit(limit).toArray();
+    const fallbackDate = new Date().toISOString().slice(0, 10);
     return docs
-      .filter((m) => m.metadata?.date || m.createdAt)
-      .map((m) => ({
-        date: m.metadata?.date ?? m.createdAt.toISOString().slice(0, 10),
-        description: m.content.slice(0, 200),
-        memoryId: m.id,
-        type: m.type,
-        scope: m.scope,
-      }));
+      .filter((m) => m && (m.metadata?.date || m.createdAt))
+      .map((m) => {
+        const dateRaw = m.metadata?.date ?? (m.createdAt instanceof Date ? m.createdAt.toISOString() : String(m.createdAt ?? ''));
+        const date = dateRaw.slice(0, 10) || fallbackDate;
+        const content = typeof m.content === 'string' ? m.content : '';
+        const id = m.id ?? '';
+        return {
+          date,
+          description: content.slice(0, 200),
+          memoryId: id,
+          type: m.type ?? 'note',
+          scope: m.scope ?? 'personal',
+        };
+      })
+      .filter((e) => e.memoryId);
   }
 
   /**
