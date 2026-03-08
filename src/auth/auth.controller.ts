@@ -118,6 +118,20 @@ export class AuthController {
     return this.auth.listUsers();
   }
 
+  @Post('admin/users')
+  @UseGuards(RolesGuard)
+  @Roles('admin')
+  async createUser(@Body() body: { email?: string; password?: string; role?: string }) {
+    const email = body?.email?.trim();
+    const password = body?.password;
+    const role = body?.role as 'admin' | 'manager' | 'user' | undefined;
+    if (!email || !password) throw new BadRequestException('email and password required');
+    if (!role || !['admin', 'manager', 'user'].includes(role)) {
+      throw new BadRequestException('role must be admin, manager, or user');
+    }
+    return this.auth.createUserByAdmin(email, password, role);
+  }
+
   @Patch('admin/users/:id/role')
   @UseGuards(RolesGuard)
   @Roles('admin')
@@ -128,5 +142,15 @@ export class AuthController {
     }
     await this.auth.setUserRole(userId, role);
     return { updated: true };
+  }
+
+  @Delete('admin/users/:id')
+  @UseGuards(RolesGuard)
+  @Roles('admin')
+  async deleteUser(@Req() req: Request, @Param('id') userId: string) {
+    const currentUserId = (req as Request & { user?: AuthUser }).user?.sub;
+    if (!currentUserId) throw new UnauthorizedException('unauthorized');
+    await this.auth.deleteUserByAdmin(userId, currentUserId);
+    return { deleted: true };
   }
 }

@@ -47,3 +47,18 @@ export interface LoginOtpRequiredResponse {
   requiresOtp: true;
   tempToken: string;
 }
+
+/** GET /auth/me — 현재 로그인 사용자 */
+export interface CurrentUser {
+  id: string;
+  email: string;
+  role: 'admin' | 'manager' | 'user';
+}
+
+/** GET /auth/admin/users — 관리자용 사용자 목록 항목 */
+export interface AdminUser {
+  id: string;
+  email: string;
+  role: 'admin' | 'manager' | 'user';
+  createdAt: string;
+}

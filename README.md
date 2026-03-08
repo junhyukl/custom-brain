@@ -310,6 +310,76 @@ custom-brain/
 
 ---
 
+## 서버 마이그레이션 (다른 서버로 이전 시)
+
+다른 호스트로 custom-brain을 옮길 때 **데이터베이스**와 **파일(문서·사진·음성 등)** 을 함께 옮겨야 합니다.
+
+### 1. 데이터베이스
+
+| 저장소 | 용도 | 마이그레이션 방법 |
+|--------|------|------------------|
+| **MongoDB** | 메모리 메타·타임라인·가족·인증 사용자 | `mongodump` → 새 서버에서 `mongorestore` |
+| **Qdrant** | 메모리·사진 벡터, (선택) 얼굴 벡터 | 스냅샷 생성 후 새 Qdrant에 복원 또는 API로 컬렉션 이전 |
+| **Neo4j** (선택) | v3 지식 그래프 | Neo4j 백업/복원 (`neo4j-admin dump` 등) |
+
+**MongoDB**
+
+- DB 이름: `MONGO_DB_NAME` (기본 `custom_brain`).
+- 컬렉션: `memories`, `persons`, `graph_edges`, `users` (인증 사용 시).
+- 예시 (기존 서버):
+  ```bash
+  mongodump --uri="mongodb://localhost:27017" --db=custom_brain --out=./mongo-backup
+  ```
+- 새 서버:
+  ```bash
+  mongorestore --uri="mongodb://localhost:27017" ./mongo-backup
+  ```
+
+**Qdrant**
+
+- 컬렉션: `memories` (768차원), (선택) `faces` (512차원).
+- [Qdrant 스냅샷](https://qdrant.tech/documentation/guides/snapshots/) 생성 후 새 인스턴스에 복원하거나, 동일 버전/차원으로 새 서버에 컬렉션을 만들고 벡터를 다시 넣는 방식으로 이전.
+
+### 2. 파일 (문서·사진·음성 등)
+
+로컬 저장 시 모든 미디어는 **`BRAIN_DATA_PATH`** (기본 `./brain-data`) 아래에 있습니다. 이 디렉터리 전체를 새 서버로 복사하면 됩니다.
+
+**폴더 구조 (복사 대상)**
+
+```
+brain-data/
+├── personal/
+│   ├── notes/          # 메모
+│   ├── documents/      # 문서 (PDF/DOCX/TXT/MD)
+│   ├── projects/
+│   ├── photos/         # 사진 (JPG/PNG/WebP)
+│   └── voice/          # 음성 (MP3/WAV 등 → Whisper STT 메모리)
+├── family/
+│   ├── photos/
+│   ├── documents/
+│   ├── history/
+│   ├── faces_src/      # 얼굴 학습용 사진
+│   └── faces.json      # 얼굴 DB (build-face-db 산출물)
+├── upload/             # 배치 업로드 대기 폴더
+└── upload/processed/   # 처리 완료 이동 폴더
+```
+
+- **복사 방법**: `rsync`, `scp`, 또는 압축 후 전송.
+  ```bash
+  rsync -avz ./brain-data/ user@new-server:/path/to/custom-brain/brain-data/
+  ```
+- **S3 사용 시**: 새 서버에서 같은 S3 버킷을 쓰면 파일 이전 없이 `S3_BUCKET`, `AWS_ACCESS_KEY_ID` 등만 설정. 버킷을 새로 쓰면 기존 버킷 객체를 새 버킷으로 복사하고, 메타데이터의 `filePath`가 `s3:...` 접두사인지 확인.
+
+### 3. 마이그레이션 순서 요약
+
+1. **기존 서버**: 서비스 중지 → MongoDB dump, Qdrant 스냅샷(또는 벡터 이전), (사용 시) Neo4j 백업 → `brain-data` 전체 복사.
+2. **새 서버**: MongoDB/Qdrant/Neo4j 설치 및 복원 → `brain-data`를 `BRAIN_DATA_PATH`에 배치 → `.env`에 `MONGO_URL`, `QDRANT_URL`, `MONGO_DB_NAME`, `BRAIN_DATA_PATH`, (선택) `NEO4J_URI`, `S3_*` 등 설정 → 애플리케이션 및 Ollama/ai-service/face-service 실행.
+3. **검증**: `GET /health`, 검색·타임라인·업로드 경로 동작 확인.
+
+- 상세 아키텍처·환경 변수: [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md).
+
+---
+
 ## 라이선스
 
 UNLICENSED

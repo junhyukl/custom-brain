@@ -293,4 +293,35 @@ export class AuthService {
     const result = await this.col.updateOne({ id: userId }, { $set: { role } });
     if (result.matchedCount === 0) throw new ForbiddenException('사용자를 찾을 수 없습니다.');
   }
+
+  /** 관리자: 사용자 생성 (이메일, 비밀번호, 역할 지정) */
+  async createUserByAdmin(
+    email: string,
+    password: string,
+    role: UserRole,
+  ): Promise<{ id: string; email: string; role: UserRole }> {
+    const normalized = email.trim().toLowerCase();
+    const existing = await this.col.findOne({ email: normalized });
+    if (existing) throw new ConflictException('이미 등록된 이메일입니다.');
+    const id = randomUUID();
+    const passwordHash = await bcrypt.hash(password, SALT_ROUNDS);
+    const user: User = {
+      id,
+      email: normalized,
+      passwordHash,
+      role,
+      createdAt: new Date(),
+    };
+    await this.col.insertOne(user);
+    return { id, email: normalized, role };
+  }
+
+  /** 관리자: 사용자 삭제 (자기 자신은 삭제 불가) */
+  async deleteUserByAdmin(userId: string, currentUserId: string): Promise<void> {
+    if (userId === currentUserId) {
+      throw new ForbiddenException('자기 자신은 삭제할 수 없습니다.');
+    }
+    const result = await this.col.deleteOne({ id: userId });
+    if (result.deletedCount === 0) throw new ForbiddenException('사용자를 찾을 수 없습니다.');
+  }
 }
