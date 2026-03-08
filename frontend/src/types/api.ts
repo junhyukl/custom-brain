@@ -35,3 +35,15 @@ export interface UpdateMemoryBody {
   content?: string;
   metadata?: { date?: string; people?: string[]; location?: string };
 }
+
+/** POST /auth/login success */
+export interface LoginResponse {
+  token: string;
+  user?: { id: string; email: string; role: string };
+}
+
+/** POST /auth/login when OTP is required */
+export interface LoginOtpRequiredResponse {
+  requiresOtp: true;
+  tempToken: string;
+}

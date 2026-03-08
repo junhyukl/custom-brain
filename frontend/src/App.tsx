@@ -5,6 +5,8 @@ import FamilyGraph from './components/FamilyGraph';
 import Upload from './components/Upload';
 import Ask from './components/Ask';
 import Memo from './components/Memo';
+import Login from './components/Login';
+import { useAuth } from './hooks/useAuth';
 
 type TabId = 'upload' | 'search' | 'ask' | 'memo' | 'timeline' | 'family';
 
@@ -17,17 +19,42 @@ const TABS: { id: TabId; label: string }[] = [
   { id: 'upload', label: '업로드' },
 ];
 
+const TAB_PANELS: Record<TabId, React.ReactNode> = {
+  upload: <Upload />,
+  search: <Search />,
+  ask: <Ask />,
+  memo: <Memo />,
+  timeline: <Timeline />,
+  family: <FamilyGraph />,
+};
+
 /**
  * Full UI: Web + Mobile. 탭으로 업로드 / 검색 / Timeline / Family Graph 전환.
- * 모바일: 사진 input에 capture → 카메라·갤러리·파일 선택 가능.
+ * 로그인 후 이용 가능 (로컬 시드: junhyukl@gmail.com / 1234AB!).
  */
 function App() {
+  const { isLoggedIn, handleLoggedIn, logout } = useAuth();
   const [activeTab, setActiveTab] = useState<TabId>('upload');
+
+  if (!isLoggedIn) {
+    return <Login onLoggedIn={handleLoggedIn} />;
+  }
 
   return (
     <div className="app max-w-7xl mx-auto px-4 py-4 pb-12 sm:p-6">
-      <h1 className="text-2xl font-bold mb-1">Personal + Family AI</h1>
-      <p className="text-zinc-400 text-sm mb-4">업로드 · 검색 · 질문 · Timeline · Family Graph (Web + 모바일)</p>
+      <header className="flex items-center justify-between mb-1">
+        <h1 className="text-2xl font-bold">Personal + Family AI</h1>
+        <button
+          type="button"
+          onClick={logout}
+          className="text-sm text-zinc-400 hover:text-zinc-200"
+        >
+          로그아웃
+        </button>
+      </header>
+      <p className="text-zinc-400 text-sm mb-4">
+        업로드 · 검색 · 질문 · Timeline · Family Graph (Web + 모바일)
+      </p>
 
       <nav
         className="flex gap-1 mb-6 border-b border-zinc-700 pb-2 overflow-x-auto"
@@ -60,12 +87,7 @@ function App() {
         id={`panel-${activeTab}`}
         aria-labelledby={`tab-${activeTab}`}
       >
-        {activeTab === 'upload' && <Upload />}
-        {activeTab === 'search' && <Search />}
-        {activeTab === 'ask' && <Ask />}
-        {activeTab === 'memo' && <Memo />}
-        {activeTab === 'timeline' && <Timeline />}
-        {activeTab === 'family' && <FamilyGraph />}
+        {TAB_PANELS[activeTab]}
       </div>
     </div>
   );

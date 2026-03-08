@@ -20,6 +20,7 @@ export const COLLECTION_MEMORY = 'memories';
 export const MONGO_COLLECTION_MEMORIES = 'memories';
 export const MONGO_COLLECTION_PERSONS = 'persons';
 export const MONGO_COLLECTION_GRAPH_EDGES = 'graph_edges';
+export const MONGO_COLLECTION_USERS = 'users';
 
 /** v2 AI Service (Python): analyze-photo, embed. 있으면 업로드 파이프라인에서 캡션·임베딩을 이 서비스로 요청 */
 export const AI_SERVICE_URL = process.env.AI_SERVICE_URL ?? '';
@@ -51,6 +52,17 @@ export const DOCUMENT_EXT_REGEX = /\.(pdf|docx|txt|md)$/i;
 /** Voice/audio extensions for STT (Whisper). mp3, wav, m4a, webm, ogg, flac */
 export const VOICE_EXT_REGEX = /\.(mp3|wav|m4a|webm|ogg|flac)$/i;
 export const ALLOWED_VOICE_EXT_MSG = '지원 형식: MP3, WAV, M4A, WebM, OGG, FLAC';
+
+/** 인증 스킵: 로컬/테스트 시 true 이면 Guard에서 인증 검사 생략 */
+export const SKIP_AUTH =
+  process.env.SKIP_AUTH === 'true' ||
+  process.env.SKIP_AUTH === '1' ||
+  process.env.NODE_ENV === 'test';
+
+/** JWT 시크릿 (설정 없으면 개발용 고정값. 프로덕션에서는 반드시 설정) */
+export const JWT_SECRET = process.env.JWT_SECRET ?? 'custom-brain-dev-secret-change-in-production';
+/** JWT 만료 (예: 7d) */
+export const JWT_EXPIRES_IN = process.env.JWT_EXPIRES_IN ?? '7d';
 
 /** Zero vector for missing embeddings (same dimension as model output). */
 export function zeroVector(dimension = EMBEDDING_DIMENSION): number[] {

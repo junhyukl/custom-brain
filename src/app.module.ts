@@ -15,9 +15,11 @@ import { ApiModule } from './api/api.module';
 import { ToolsModule } from './tools/tools.module';
 import { UploadModule } from './upload/upload.module';
 import { HealthModule } from './health/health.module';
+import { AuthModule } from './auth/auth.module';
 
 @Module({
   imports: [
+    AuthModule,
     ScheduleModule.forRoot(),
     MongoModule,
     VectorModule,

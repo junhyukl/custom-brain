@@ -243,8 +243,11 @@ curl -X POST http://localhost:3001/brain/ask -H "Content-Type: application/json"
 | `NEO4J_URI` | (없음) | v3 지식 그래프 (예: bolt://localhost:7687) |
 | `S3_BUCKET` | (없음) | 설정 시 업로드를 S3로 (S3_REGION, AWS_ACCESS_KEY_ID 등) |
 | `CORS_ORIGIN` | (없음) | 설정 시 CORS 허용 origin (쉼표 구분). 미설정 시 모든 origin 허용 (개발용) |
+| `SKIP_AUTH` | (없음) | `true` 또는 `1`이면 `/brain/*` 인증 생략. 로컬 개발 시 Timeline 등 401 방지용 |
 
 `.env` 파일로 덮어쓰기 가능. 예시: `.env.example` 참고.
+
+**프론트엔드**: 인증 사용 시(백엔드에서 `SKIP_AUTH` 미설정) UI에서 API 키를 보내야 함. `frontend/.env`에 `VITE_API_KEY=cb_xxx` 설정 (백엔드에서 API 키 발급 후). `frontend/.env.example` 참고.
 
 **서비스별 env**: ai-service — `HUGGINGFACE_TOKEN` 또는 `PYANNOTE_TOKEN` (pyannote 화자 구분 시). face-service — `INSIGHTFACE_GPU=1` (CUDA 사용 시). Neo4j 설정 시 사진·음성 메모리가 Person–APPEARS_IN/SPOKE–Memory 그래프로 연결됨.
 

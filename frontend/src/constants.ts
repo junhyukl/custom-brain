@@ -1,3 +1,6 @@
+/** localStorage 키: 로그인 JWT */
+export const AUTH_TOKEN_KEY = 'auth_token';
+
 /** API 기본 limit (타임라인·검색) */
 export const API_TIMELINE_LIMIT = 200;
 export const API_SEARCH_LIMIT = 12;

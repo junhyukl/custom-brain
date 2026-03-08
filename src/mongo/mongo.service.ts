@@ -1,11 +1,11 @@
 import { Injectable, OnModuleDestroy, OnModuleInit } from '@nestjs/common';
 import { MongoClient, Db, Collection } from 'mongodb';
-import type { Memory } from '../schemas';
-import type { Person } from '../schemas';
+import type { Memory, Person, User } from '../schemas';
 import {
   MONGO_COLLECTION_MEMORIES,
   MONGO_COLLECTION_PERSONS,
   MONGO_COLLECTION_GRAPH_EDGES,
+  MONGO_COLLECTION_USERS,
   MONGO_URL,
   MONGO_DB_NAME,
 } from '../common/constants';
@@ -48,6 +48,10 @@ export class MongoService implements OnModuleInit, OnModuleDestroy {
 
   getGraphEdgesCollection(): Collection<GraphEdge> {
     return this.db.collection<GraphEdge>(MONGO_COLLECTION_GRAPH_EDGES);
+  }
+
+  getUsersCollection(): Collection<User> {
+    return this.db.collection<User>(MONGO_COLLECTION_USERS);
   }
 }
 

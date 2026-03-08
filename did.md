@@ -179,4 +179,46 @@
 
 ---
 
+## 15. 인증 (2FA + Passkey, Mongo)
+
+- **스키마·상수**
+  - `src/schemas/user.schema.ts`: User (id, email, passwordHash, role?, totpSecret?, passkeyCredentials?, apiKeys?, createdAt), PasskeyCredential, ApiKeyEntry (id, keyHash, name?, createdAt), UserRole = 'admin' | 'manager' | 'user'. Mongo 컬렉션 `users` (`MONGO_COLLECTION_USERS`).
+  - `src/common/constants.ts`: `SKIP_AUTH`(로컬/테스트 시 true), `JWT_SECRET`, `JWT_EXPIRES_IN`, `MONGO_COLLECTION_USERS`.
+- **2FA (비밀번호 + OTP)**
+  - 회원가입: `POST /auth/register` (email, password) → bcrypt 해시 저장, JWT 발급. 첫 가입자는 role=admin, 이후 user.
+  - 로그인: `POST /auth/login` → TOTP 미설정 시 JWT, 설정 시 `{ requiresOtp: true, tempToken }`. `POST /auth/verify-otp` (tempToken, otp) → JWT.
+  - OTP 설정: `POST /auth/setup-otp` (인증 필수) → speakeasy 시크릿·otpauth URL 반환, 사용자 문서에 totpSecret 저장.
+- **Passkey (WebAuthn, FaceID/지문/기기 잠금 해제)**
+  - 등록: `GET /auth/passkey/register/options`, `POST /auth/passkey/register` (인증 필수) → 검증 후 passkeyCredentials에 저장.
+  - 인증: `GET /auth/passkey/auth/options`, `POST /auth/passkey/auth` (공개) → 검증 후 JWT 발급.
+  - `@simplewebauthn/server` 사용. env: `AUTH_RP_NAME`, `AUTH_RP_ID`, `AUTH_ORIGIN` (기본 localhost).
+- **사용자 역할·관리**
+  - 역할: admin, manager, user. JWT·API 키 인증 시 `req.user.role` 설정.
+  - `GET /auth/me` (인증 필수): 현재 사용자 id, email, role.
+  - `RolesGuard` + `@Roles('admin')`: `GET /auth/admin/users`, `PATCH /auth/admin/users/:id/role` (body: `{ role }`) — admin 전용.
+- **API 키 (사용자별)**
+  - 생성: `POST /auth/api-keys` (body: `name?`) → `{ id, name, key, createdAt }`. 평문 `key`는 이 응답에서만 확인 가능, DB에는 SHA-256 해시만 저장.
+  - 목록: `GET /auth/api-keys` → `{ id, name?, createdAt }[]`.
+  - 폐기: `DELETE /auth/api-keys/:id`.
+  - API 호출 시 인증: `Authorization: Bearer <JWT>` 또는 `X-API-Key: <key>` 또는 `Authorization: ApiKey <key>`. 키 접두사 `cb_`.
+- **가드·공개 라우트**
+  - `GlobalAuthGuard`: `SKIP_AUTH` 또는 `NODE_ENV=test` 이면 항상 통과. 그 외 `@Public()` 없으면 JWT 또는 API 키 검사.
+  - `@Public()`: register, login, verify-otp, passkey/auth/options, passkey/auth. `/brain/*` 등은 인증 필요(SKIP_AUTH false 시).
+- **모듈**
+  - `AuthModule`: MongoModule, JwtModule, AuthService, AuthController, APP_GUARD(GlobalAuthGuard). AppModule에 import.
+
+---
+
+## 16. 시드 유저 + 로컬 로그인 UI
+
+- **시드 유저**
+  - `AuthSeedService`: 앱 기동 시 `users` 컬렉션이 비어 있으면 `junhyukl@gmail.com` / `1234AB!` (role: admin) 자동 생성. `src/auth/auth-seed.service.ts`, AuthModule에 등록.
+- **프론트엔드 로그인**
+  - `Login.tsx`: 이메일·비밀번호 폼 → `POST /auth/login` → JWT를 `localStorage.auth_token`에 저장.
+  - `App.tsx`: 토큰 없으면 로그인 화면, 있으면 메인 탭 + 로그아웃 버튼. 401 시 `auth:logout` 이벤트로 로그인 화면 복귀.
+  - `main.tsx`: axios 401 응답 시 토큰 제거 + `auth:logout` 디스패치. 요청 시 `AUTH_TOKEN_KEY`(constants)에서 JWT 또는 `VITE_API_KEY` 헤더 첨부.
+  - `vite.config.ts`: `/auth` 프록시 추가 (백엔드 3001).
+
+---
+
 *마지막 갱신: version1 브랜치 기준.*
