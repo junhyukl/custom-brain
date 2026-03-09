@@ -142,7 +142,13 @@ curl -X POST http://localhost:3001/brain/ask -H "Content-Type: application/json"
 | `pnpm run ingest-all-parallel` | 병렬 수집 (기본 10 workers, `INGEST_WORKERS=20` 등) |
 | `pnpm run build-timeline` | 메모리 연도별 타임라인 통계 출력 |
 
-**폴더 구조**: `brain-data/personal/` (notes, documents, projects, photos), `brain-data/family/` (photos, documents, history, faces_src). 문서: PDF/DOCX/TXT/MD. 사진: JPG/PNG/WebP.
+**폴더 구조**: `brain-data/personal/` (notes, documents, projects, photos), `brain-data/family/` (photos = 가족 사진, 시드 후 `ingest-photos` 실행; documents, history; faces_src = 얼굴 DB용 인물당 1장; faces.json = `build-face-db` 결과). 문서: PDF/DOCX/TXT/MD. 사진: JPG/PNG/WebP.
+
+**가족 사진 시드 (Family photos)** — 검색·타임라인에 가족 사진을 반영하려면 `brain-data/family/photos/`에 사진을 넣은 뒤 `pnpm run ingest-photos`를 실행하면 됩니다.
+
+1. **사진 배치**: `brain-data/family/photos/` 아래에 JPG/PNG/WebP를 복사합니다. 하위 폴더 사용 가능 (예: `2020_trip/`, `birthday/`).
+2. **(선택) 얼굴 인식**: `brain-data/family/faces_src/`에 인물당 사진 1장을 넣고, 파일명을 `이름_번호.jpg` 형식으로 합니다 (예: `Hwaseong_Lee_01.jpg`). 이후 `pnpm run build-face-db` 실행 → `faces.json` 생성.
+3. **수집 실행**: Docker로 Qdrant·Mongo 기동 후 `pnpm run ingest-photos` 실행. Ollama 또는 AI_SERVICE_URL 필요. 얼굴 태깅 시 FACE_SERVICE_URL 또는 face-api 모델 필요.
 
 ### 5. 가족 트리
 
@@ -151,7 +157,7 @@ curl -X POST http://localhost:3001/brain/ask -H "Content-Type: application/json"
 | 트리 조회 | GET | `/brain/family/tree` | - |
 | 구성원 추가 | POST | `/brain/family/persons` | `{ "name", "relation", "birthDate?", "description?", "parentIds?" }` |
 
-`relation` 예: `father`, `mother`, `grandfather`, `grandmother`, `child`, `spouse`, `sibling`.
+`relation` 예: `father`, `mother`, `grandfather`, `grandmother`, `child`, `spouse`, `sibling`, `myself`.
 
 ### 6. v3 Self-Learning
 
