@@ -5,7 +5,8 @@ export type PersonRelation =
   | 'grandmother'
   | 'child'
   | 'spouse'
-  | 'sibling';
+  | 'sibling'
+  | 'myself';
 
 export interface Person {
   id: string;

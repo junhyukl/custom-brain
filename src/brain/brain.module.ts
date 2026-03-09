@@ -5,6 +5,7 @@ import { AskBrainService } from './askBrain.service';
 import { RagService } from './rag.service';
 import { AgentMemoryService } from './agentMemory.service';
 import { FamilyService } from './family.service';
+import { FamilySeedService } from './family-seed.service';
 import { PhotoAnalyzeService } from './photo-analyze.service';
 import { BrainOrganizeService } from './brain-organize.service';
 import { BrainRoutes } from '../routes/brain.routes';
@@ -22,6 +23,7 @@ import { Neo4jModule } from '../neo4j/neo4j.module';
     RagService,
     AgentMemoryService,
     FamilyService,
+    FamilySeedService,
     PhotoAnalyzeService,
     BrainOrganizeService,
   ],
