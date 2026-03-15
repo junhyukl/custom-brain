@@ -27,6 +27,20 @@ export interface ProcessDocumentResult {
 export class DocumentProcessService {
   constructor(private readonly memory: MemoryService) {}
 
+  /** 텍스트만 추출 (저장 없음). PDF/DOCX/TXT/MD 지원. */
+  async extractText(filePath: string): Promise<string | null> {
+    const resolvedPath = path.resolve(filePath);
+    const ext = path.extname(resolvedPath).toLowerCase().slice(1);
+    const extract = DOC_EXT[ext as keyof typeof DOC_EXT];
+    if (!extract) return null;
+    try {
+      const content = await extract(resolvedPath);
+      return content && content.length >= 2 ? content : null;
+    } catch {
+      return null;
+    }
+  }
+
   async processDocument(
     filePath: string,
     scope: 'personal' | 'family',

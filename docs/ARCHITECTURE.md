@@ -45,10 +45,12 @@ custom-brain
 │   └─ POST /detect  … 이미지 → 얼굴 임베딩
 │
 ├─ Qdrant (6333)   … memories(768), (선택) faces(512)
-├─ MongoDB (27017) … memories, persons, graph_edges
+├─ MongoDB (27017) … memories, persons, graph_edges, users (인증)
 ├─ Neo4j (7687)    … v3 Entity, RELATED_TO (선택)
 └─ Ollama (11434)  … LLM, Vision, Embedding
 ```
+
+**인증 (선택)**: `SKIP_AUTH` 미설정 시 `/brain/*`, `/auth/me` 등은 JWT 또는 API 키 필요. 회원가입·로그인·관리자 사용자 관리(CRUD)·역할 변경. 2FA·Passkey 지원.
 
 ---
 
@@ -91,7 +93,7 @@ Photo Upload
   → 메모리 metadata.people, metadata.personIds 저장
 ```
 
-**관련 API**: `GET /brain/family/graph` (nodes + edges), `GET /brain/family/tree` (parent 기준 트리).
+**관련 API**: `GET /brain/family/graph` (nodes + edges), `GET /brain/family/tree` (parent 기준 트리). `POST /brain/family/addPhoto` (filePath → Vision·저장), `POST /brain/family/addDocument` (filePath → 요약·저장).
 
 **컬렉션**:
 - Qdrant `faces`: 512차원 얼굴 임베딩, payload `personId`, `personName`, `photoPath`
@@ -124,6 +126,7 @@ src/
 ├── config/          # 설정 (storage, qdrant, ollama, face)
 ├── common/          # 상수·유틸 (constants, DOCUMENT_EXT_REGEX 등)
 ├── schemas/         # Memory, Person, Event, PhotoMemory 등
+├── auth/            # 인증 (JWT, API 키, 2FA, Passkey, 사용자 관리)
 ├── api/             # 컨트롤러 (memory, search, timeline, photo, family, file)
 ├── mongo/           # MongoDB 연결·컬렉션
 ├── vector/          # Qdrant, VectorService
@@ -145,7 +148,7 @@ src/
 | 레이어 | 폴더 | 역할 |
 |--------|------|------|
 | 설정·공용 | config, common, schemas | 설정값, 상수, 타입/스키마 |
-| 인프라 | mongo, vector, llm, vision, storage, neo4j, ai-service | DB·LLM·파일·외부 서비스 |
+| 인프라 | mongo, vector, llm, vision, storage, neo4j, ai-service, auth | DB·LLM·파일·인증·외부 서비스 |
 | 코어 | brain-core | 메모리·임베딩·검색·타임라인 |
 | 기능 | brain, ingestion, upload | 채팅·가족·업로드·수집 |
 | API | api | REST 컨트롤러 |
@@ -173,6 +176,7 @@ src/
 | EMBED_MAX_INPUT_CHARS | 2000 | 임베딩 입력 최대 문자 |
 | BRAIN_DATA_PATH | ./brain-data | 데이터 루트 |
 | S3_BUCKET | (없음) | 설정 시 업로드 S3 저장 |
+| SKIP_AUTH | (없음) | true/1 이면 /brain/* 인증 생략 |
 
 ### 5.2 Docker Compose
 
@@ -194,19 +198,18 @@ src/
 | 질의 (RAG + 메모리) | POST | /brain/ask |
 | 채팅 | POST | /brain/chat |
 | 세션 대화 | GET | /brain/memory |
-| 메모리 저장 | POST | /brain/memory |
+| 메모리 저장·조회·수정·삭제 | POST/GET/PATCH/DELETE | /brain/memory, /brain/memory/:id, /brain/memories/clear |
 | 벡터 검색 | GET | /brain/memory/search |
-| 사진 검색 | GET | /brain/photos/search |
-| 문서 검색 | GET | /brain/documents/search |
+| 사진·문서 검색 | GET | /brain/photos/search, /brain/documents/search |
 | 타임라인 | GET | /brain/timeline |
-| 가족 트리 | GET | /brain/family/tree |
-| 가족 그래프 | GET | /brain/family/graph |
-| 가족 구성원 추가 | POST | /brain/family/persons |
-| 사진 업로드 | POST | /brain/upload/photo |
-| 문서 업로드 | POST | /brain/upload/document |
+| 가족 트리·그래프 | GET | /brain/family/tree, /brain/family/graph |
+| 가족 구성원·관계 | POST | /brain/family/persons, /brain/family/graph/relation |
+| 가족 사진·문서 (경로 기준) | POST | /brain/family/addPhoto, /brain/family/addDocument |
+| 사진·문서·음성 업로드 | POST | /brain/upload/photo, /brain/upload/document, /brain/upload/voice |
 | v3 정리 1회 | POST | /brain/organize |
+| 인증 | GET/POST | /auth/me, /auth/login, /auth/register; /auth/admin/users (CRUD·역할) |
 
-상세 API·에이전트 툴은 루트 [README.md](../README.md) 및 [openclaw/custom-brain/SKILL.md](openclaw/custom-brain/SKILL.md) 참고.
+상세 API 목록은 루트 [README.md](../README.md), 에이전트 툴은 [openclaw/custom-brain/SKILL.md](openclaw/custom-brain/SKILL.md) 참고.
 
 ---
 

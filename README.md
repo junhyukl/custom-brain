@@ -6,18 +6,21 @@ NestJS 기반 **개인화 AI 브레인** API. 메모리 검색·저장, RAG, 자
 
 ## 주요 기능
 
-| 영역 | 기능 |
-|------|------|
-| **채팅·질의** | `POST /brain/chat`, `POST /brain/ask` — RAG + 자동 메모리 평가(Important? → store/ignore) |
-| **메모리·검색** | 벡터 검색, 메모리/사진/문서 검색, 타임라인 (Qdrant + MongoDB) |
-| **업로드** | 사진(JPG/PNG/WebP), 문서(PDF/DOCX/TXT/MD), **음성**(MP3/WAV 등 → Whisper STT → 메모리) → 저장·추출·임베딩·메모리 자동 반영 |
-| **대량 수집** | 폴더 스캔 → 얼굴 인식·Vision·임베딩 → `ingest-photos` / `ingest-all` / `ingest-all-parallel` |
-| **가족** | 가족 트리·구성원 API, (선택) 얼굴 인식 → Family Graph |
-| **v3 Self-Learning** | `POST /brain/organize` — 클러스터·타임라인·지식 그래프·요약. 매일 새벽 cron |
-| **에이전트·UI** | OpenClaw 스킬, `run-agent` 예제, 웹 UI(업로드·검색·Timeline·Family Graph) |
+
+| 영역                   | 기능                                                                                                 |
+| -------------------- | -------------------------------------------------------------------------------------------------- |
+| **채팅·질의**            | `POST /brain/chat`, `POST /brain/ask` — RAG + 자동 메모리 평가(Important? → store/ignore)                 |
+| **메모리·검색**           | 벡터 검색, 메모리/사진/문서 검색, 타임라인 (Qdrant + MongoDB)                                                       |
+| **업로드**              | 사진(JPG/PNG/WebP), 문서(PDF/DOCX/TXT/MD), **음성**(MP3/WAV 등 → Whisper STT → 메모리) → 저장·추출·임베딩·메모리 자동 반영 |
+| **대량 수집**            | 폴더 스캔 → 얼굴 인식·Vision·임베딩 → `ingest-photos` / `ingest-all` / `ingest-all-parallel`                  |
+| **가족**               | 가족 트리·구성원 API, (선택) 얼굴 인식 → Family Graph                                                           |
+| **v3 Self-Learning** | `POST /brain/organize` — 클러스터·타임라인·지식 그래프·요약. 매일 새벽 cron                                           |
+| **에이전트·UI**          | OpenClaw 스킬, `run-agent` 예제, 웹 UI(업로드·검색·Timeline·Family Graph)                                    |
+
 
 - **로컬 우선**: Ollama + (선택) Qdrant·MongoDB. 데이터를 외부 클라우드에 넘기지 않고 셀프호스트 가능.
-- **아키텍처**: [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) (통합), [docs/README.md](docs/README.md) (문서 인덱스)
+- **인증**: 로그인·회원가입·API 키·(선택) 2FA/Passkey. 관리자: 사용자 관리·역할 변경. `SKIP_AUTH=true` 시 인증 생략.
+- **문서**: 이 README가 기능·API·스크립트·환경의 단일 진입점. 상세는 [docs/README.md](docs/README.md) 인덱스 참고.
 
 ---
 
@@ -76,7 +79,7 @@ docker compose -f docker/docker-compose.yml up -d
 pnpm run start:dev
 ```
 
-서버: **http://localhost:3001**
+서버: **[http://localhost:3001](http://localhost:3001)**
 
 **한 번에 실행** (Docker + Nest + ai-service + face-service + UI):
 
@@ -92,11 +95,13 @@ pnpm run start:all
 
 ### 1. 채팅·질의
 
-| 용도 | Method | Path | Body |
-|------|--------|------|------|
-| 한 턴 채팅 (RAG + 자동 메모리) | POST | `/brain/chat` | `{ "message": "..." }` |
-| 질의 (검색 → LLM 답변 → 자동 메모리) | POST | `/brain/ask` | `{ "question": "..." }` |
-| 세션 대화 목록 | GET | `/brain/memory` | - |
+
+| 용도                        | Method | Path            | Body                    |
+| ------------------------- | ------ | --------------- | ----------------------- |
+| 한 턴 채팅 (RAG + 자동 메모리)     | POST   | `/brain/chat`   | `{ "message": "..." }`  |
+| 질의 (검색 → LLM 답변 → 자동 메모리) | POST   | `/brain/ask`    | `{ "question": "..." }` |
+| 세션 대화 목록                  | GET    | `/brain/memory` | -                       |
+
 
 ```bash
 curl -X POST http://localhost:3001/brain/chat -H "Content-Type: application/json" -d "{\"message\":\"오늘 점심 뭐 먹었지?\"}"
@@ -105,24 +110,28 @@ curl -X POST http://localhost:3001/brain/ask -H "Content-Type: application/json"
 
 ### 2. 메모리·검색·타임라인
 
-| 용도 | Method | Path | Query / Body |
-|------|--------|------|--------------|
-| 메모리 저장 | POST | `/brain/memory` | `{ "content", "scope?", "type?", "metadata?" }` |
-| 벡터 검색 | GET | `/brain/memory/search` | `?q=검색어&limit=10&scope=personal|family` |
-| 최근 메모리 | GET | `/brain/memory/recall` | `?limit=50` |
-| 사진 검색 | GET | `/brain/photos/search` | `?q=검색어&limit=10` |
-| 문서 검색 | GET | `/brain/documents/search` | `?q=검색어&limit=10` |
-| 타임라인 | GET | `/brain/timeline` | `?scope=personal|family&limit=100` |
+
+| 용도     | Method | Path                      | Query / Body                                    |
+| ------ | ------ | ------------------------- | ----------------------------------------------- |
+| 메모리 저장 | POST   | `/brain/memory`           | `{ "content", "scope?", "type?", "metadata?" }` |
+| 벡터 검색  | GET    | `/brain/memory/search`    | `?q=검색어&limit=10&scope=personal                 |
+| 최근 메모리 | GET    | `/brain/memory/recall`    | `?limit=50`                                     |
+| 사진 검색  | GET    | `/brain/photos/search`    | `?q=검색어&limit=10`                               |
+| 문서 검색  | GET    | `/brain/documents/search` | `?q=검색어&limit=10`                               |
+| 타임라인   | GET    | `/brain/timeline`         | `?scope=personal                                |
+
 
 ### 3. 파일 업로드
 
-| 용도 | Method | Path | 설명 |
-|------|--------|------|------|
-| 사진 업로드 | POST | `/brain/upload/photo` | multipart `file` — JPG/PNG/WebP. EXIF·Vision·Embedding·Qdrant·Mongo |
-| 문서 업로드 | POST | `/brain/upload/document` | multipart `file` — **PDF/DOCX/TXT/MD**. 텍스트 추출·Embedding·Qdrant·Mongo |
-| **음성 업로드** | POST | `/brain/upload/voice` | multipart `file` + 선택 `speaker`. **MP3/WAV/M4A 등** → ai-service Whisper STT → 텍스트 메모리 저장. `AI_SERVICE_URL` 필요. |
 
-- 웹 UI: `pnpm run dev:ui` → http://localhost:5173 에서 드래그 앤 드롭 업로드·검색·Timeline·Family Graph.
+| 용도         | Method | Path                     | 설명                                                                                                             |
+| ---------- | ------ | ------------------------ | -------------------------------------------------------------------------------------------------------------- |
+| 사진 업로드     | POST   | `/brain/upload/photo`    | multipart `file` — JPG/PNG/WebP. EXIF·Vision·Embedding·Qdrant·Mongo                                            |
+| 문서 업로드     | POST   | `/brain/upload/document` | multipart `file` — **PDF/DOCX/TXT/MD**. 텍스트 추출·Embedding·Qdrant·Mongo                                          |
+| **음성 업로드** | POST   | `/brain/upload/voice`    | multipart `file` + 선택 `speaker`. **MP3/WAV/M4A 등** → ai-service Whisper STT → 텍스트 메모리 저장. `AI_SERVICE_URL` 필요. |
+
+
+- 웹 UI: `pnpm run dev:ui` → [http://localhost:5173](http://localhost:5173) 에서 드래그 앤 드롭 업로드·검색·Timeline·Family Graph.
 
 **배치 업로드 (폴더)** — UI 일괄 업로드와 동일한 API로 처리:
 
@@ -134,13 +143,15 @@ curl -X POST http://localhost:3001/brain/ask -H "Content-Type: application/json"
 
 ### 4. 대량 수집 (Ingestion)
 
-| 명령 | 설명 |
-|------|------|
-| `pnpm run build-face-db` | `brain-data/family/faces_src/` → `faces.json` (인물당 사진 1장 넣은 뒤 실행) |
-| `pnpm run ingest-photos` | personal + family 사진 스캔 → 얼굴·Vision·임베딩·Qdrant·Memory |
-| `pnpm run ingest-all` | 사진 + 문서(PDF/DOCX/TXT/MD) 통합 스캔 → 벡터화·Memory |
-| `pnpm run ingest-all-parallel` | 병렬 수집 (기본 10 workers, `INGEST_WORKERS=20` 등) |
-| `pnpm run build-timeline` | 메모리 연도별 타임라인 통계 출력 |
+
+| 명령                             | 설명                                                                |
+| ------------------------------ | ----------------------------------------------------------------- |
+| `pnpm run build-face-db`       | `brain-data/family/faces_src/` → `faces.json` (인물당 사진 1장 넣은 뒤 실행) |
+| `pnpm run ingest-photos`       | personal + family 사진 스캔 → 얼굴·Vision·임베딩·Qdrant·Memory             |
+| `pnpm run ingest-all`          | 사진 + 문서(PDF/DOCX/TXT/MD) 통합 스캔 → 벡터화·Memory                       |
+| `pnpm run ingest-all-parallel` | 병렬 수집 (기본 10 workers, `INGEST_WORKERS=20` 등)                      |
+| `pnpm run build-timeline`      | 메모리 연도별 타임라인 통계 출력                                                |
+
 
 **폴더 구조**: `brain-data/personal/` (notes, documents, projects, photos), `brain-data/family/` (photos = 가족 사진, 시드 후 `ingest-photos` 실행; documents, history; faces_src = 얼굴 DB용 인물당 1장; faces.json = `build-face-db` 결과). 문서: PDF/DOCX/TXT/MD. 사진: JPG/PNG/WebP.
 
@@ -152,18 +163,24 @@ curl -X POST http://localhost:3001/brain/ask -H "Content-Type: application/json"
 
 ### 5. 가족 트리
 
-| 용도 | Method | Path | Body |
-|------|--------|------|------|
-| 트리 조회 | GET | `/brain/family/tree` | - |
-| 구성원 추가 | POST | `/brain/family/persons` | `{ "name", "relation", "birthDate?", "description?", "parentIds?" }` |
+
+| 용도     | Method | Path                    | Body                                                                 |
+| ------ | ------ | ----------------------- | -------------------------------------------------------------------- |
+| 트리 조회  | GET    | `/brain/family/tree`    | -                                                                    |
+| 구성원 추가 | POST   | `/brain/family/persons` | `{ "name", "relation", "birthDate?", "description?", "parentIds?" }` |
+| 가족 사진 1건 추가 | POST | `/brain/family/addPhoto` | `{ "filePath", "person"? }` — 경로 → Vision/LLM 설명 → 저장 |
+| 가족 문서 1건 추가 | POST | `/brain/family/addDocument` | `{ "filePath", "person"? }` — PDF/TXT/MD 요약 → 저장 |
+
 
 `relation` 예: `father`, `mother`, `grandfather`, `grandmother`, `child`, `spouse`, `sibling`, `myself`.
 
 ### 6. v3 Self-Learning
 
-| 용도 | Method | Path | 설명 |
-|------|--------|------|------|
-| 정리 1회 실행 | POST | `/brain/organize` | 클러스터·타임라인·지식 그래프·요약 (AI_SERVICE_URL, NEO4J_URI 설정 시) |
+
+| 용도       | Method | Path              | 설명                                                   |
+| -------- | ------ | ----------------- | ---------------------------------------------------- |
+| 정리 1회 실행 | POST   | `/brain/organize` | 클러스터·타임라인·지식 그래프·요약 (AI_SERVICE_URL, NEO4J_URI 설정 시) |
+
 
 - 매일 03:00 cron으로 `clusterMemories`, `generateSummaries`, `updateKnowledgeGraph` 자동 실행.
 
@@ -177,79 +194,102 @@ curl -X POST http://localhost:3001/brain/ask -H "Content-Type: application/json"
 
 ## API 요약
 
-| Method | Path | Body / Query | 설명 |
-|--------|------|--------------|------|
-| GET | `/` | - | Root (간단 응답) |
-| GET | `/health` | - | **헬스 체크** — Mongo·Qdrant 연결 확인. 200=정상, 503=일부 비가용 |
-| GET | `/test` | - | 테스트 러너 UI |
-| POST | `/test/run` | - | 테스트 실행 (pnpm run test) |
-| GET | `/brain/memory` | - | 세션 대화 목록 |
-| POST | `/brain/chat` | `{ "message" }` | 채팅 (RAG + 메모리 저장) |
-| POST | `/brain/ask` | `{ "question" }` | 질의 (검색 → LLM → 메모리 저장) |
-| POST | `/brain/memory` | `{ "content", "scope?", "type?", "metadata?" }` | 메모리 저장 |
-| GET | `/brain/memory/search` | `?q=&limit=&scope=` | 벡터 검색 |
-| GET | `/brain/memory/recall` | `?limit=` | 최근 메모리 |
-| GET | `/brain/photos/search` | `?q=&limit=` | 사진 검색 |
-| GET | `/brain/documents/search` | `?q=&limit=` | 문서 검색 |
-| GET | `/brain/timeline` | `?scope=&limit=` | 타임라인 |
-| GET | `/brain/family/tree` | - | 가족 트리 |
-| POST | `/brain/family/persons` | `{ "name", "relation", ... }` | 가족 구성원 추가 |
-| POST | `/brain/photo/analyze` | `{ "image": "base64...", "date?", "people?" }` | 사진 분석 후 메모리 저장 |
-| POST | `/brain/upload/photo` | multipart `file` | 사진 업로드 |
-| POST | `/brain/upload/document` | multipart `file` | 문서 업로드 (PDF/DOCX/TXT/MD) |
-| POST | `/brain/upload/voice` | multipart `file`, body `speaker?` | 음성 업로드 → Whisper STT → 메모리 |
-| POST | `/brain/organize` | - | v3 정리 1회 실행 |
+
+| Method | Path                      | Body / Query                                    | 설명                                                 |
+| ------ | ------------------------- | ----------------------------------------------- | -------------------------------------------------- |
+| GET    | `/`                       | -                                               | Root (간단 응답)                                       |
+| GET    | `/health`                 | -                                               | **헬스 체크** — Mongo·Qdrant 연결 확인. 200=정상, 503=일부 비가용 |
+| GET    | `/test`                   | -                                               | 테스트 러너 UI                                          |
+| POST   | `/test/run`               | -                                               | 테스트 실행 (pnpm run test)                             |
+| GET    | `/brain/memory`           | -                                               | 세션 대화 목록                                           |
+| POST   | `/brain/chat`             | `{ "message" }`                                 | 채팅 (RAG + 메모리 저장)                                  |
+| POST   | `/brain/ask`              | `{ "question" }`                                | 질의 (검색 → LLM → 메모리 저장)                             |
+| POST   | `/brain/memory`           | `{ "content", "scope?", "type?", "metadata?" }` | 메모리 저장                                             |
+| GET    | `/brain/memory/search`    | `?q=&limit=&scope=`                             | 벡터 검색                                              |
+| GET    | `/brain/memory/recall`    | `?limit=`                                       | 최근 메모리                                             |
+| GET    | `/brain/photos/search`    | `?q=&limit=`                                    | 사진 검색                                              |
+| GET    | `/brain/documents/search` | `?q=&limit=`                                    | 문서 검색                                              |
+| GET    | `/brain/timeline`         | `?scope=&limit=`                                | 타임라인                                               |
+| GET    | `/brain/family/tree`      | -                                               | 가족 트리                                              |
+| POST   | `/brain/family/persons`   | `{ "name", "relation", ... }`                   | 가족 구성원 추가                                          |
+| POST   | `/brain/family/addPhoto`  | `{ "filePath", "person"? }`                     | 가족 사진 1건 추가 (경로 → LLM 설명 → 저장)                 |
+| POST   | `/brain/family/addDocument` | `{ "filePath", "person"? }`                   | 가족 문서 1건 추가 (PDF/TXT/MD 요약 → 저장)                 |
+| POST   | `/brain/photo/analyze`    | `{ "image": "base64...", "date?", "people?" }`  | 사진 분석 후 메모리 저장                                     |
+| POST   | `/brain/upload/photo`     | multipart `file`                                | 사진 업로드                                             |
+| POST   | `/brain/upload/document`  | multipart `file`                                | 문서 업로드 (PDF/DOCX/TXT/MD)                           |
+| POST   | `/brain/upload/voice`     | multipart `file`, body `speaker?`               | 음성 업로드 → Whisper STT → 메모리                         |
+| POST   | `/brain/organize`         | -                                               | v3 정리 1회 실행                                        |
+| GET    | `/brain/memory/:id`       | -                                               | 메모리 1건 조회                                          |
+| PATCH  | `/brain/memory/:id`       | `{ "content?", "metadata?" }`                   | 메모리 수정                                               |
+| DELETE | `/brain/memory/:id`       | -                                               | 메모리 삭제                                               |
+| DELETE | `/brain/memories/clear`  | -                                               | 메모리 전체 삭제                                          |
+| GET    | `/brain/family/graph`     | -                                               | 가족 그래프 (nodes + edges)                                |
+| POST   | `/brain/family/graph/relation` | `{ "from", "relation", "to" }`            | 가족 관계 추가 (Neo4j 등)                                  |
+| GET    | `/brain/file`             | `?key=personal/photos/...`                      | S3 presigned URL (S3 사용 시)                             |
+| POST   | `/brain/face/match`       | `{ "embedding": number[] }`                     | 얼굴 임베딩 → 인물 매칭 (personId, personName)               |
+| GET    | `/auth/me`                 | -                                               | 현재 사용자 (인증 필요)                                     |
+| POST   | `/auth/login`             | `{ "email", "password" }`                      | 로그인 (공개)                                             |
+| POST   | `/auth/register`          | `{ "email", "password" }`                      | 회원가입 (공개)                                           |
+| GET    | `/auth/admin/users`       | -                                               | 사용자 목록 (admin)                                       |
+| POST   | `/auth/admin/users`       | `{ "email", "password", "role" }`              | 사용자 추가 (admin)                                       |
+| PATCH  | `/auth/admin/users/:id/role` | `{ "role" }`                                | 사용자 역할 변경 (admin)                                   |
+| DELETE | `/auth/admin/users/:id`   | -                                               | 사용자 삭제 (admin, 본인 제외)                             |
+
 
 ---
 
 ## 스크립트 요약
 
-| 명령 | 설명 |
-|------|------|
-| `pnpm run start:dev` | Nest 개발 서버만 (watch) |
-| `pnpm run start:prod` | 프로덕션 서버 |
-| `pnpm run start:docker` | Docker: Qdrant + Mongo up |
-| `pnpm run start:all` | Docker + Nest + ai + face + UI 동시 실행 |
-| `pnpm run dev` | **개발용** — start:all과 동일 (Docker + Nest + ai + face + UI) |
-| `pnpm run ingest-photos` | 사진 스캔 → 얼굴·Vision·메모리 |
-| `pnpm run ingest-all` | 사진 + 문서 통합 스캔 |
-| `pnpm run ingest-all-parallel` | 병렬 수집 |
-| `pnpm run batch-upload` | `brain-data/upload` 폴더 파일 → /brain/upload/photo·document (서버 실행 중) |
-| `pnpm run build-face-db` | 얼굴 DB (faces_src → faces.json) |
-| `pnpm run build-timeline` | 타임라인 통계 |
-| `pnpm run run-agent` | 에이전트 예제 (질문 → 검색 → Ollama) |
-| `pnpm run dev:ui` | 웹 UI (http://localhost:5173) |
-| `pnpm run build:ui` | 웹 UI 프로덕션 빌드 |
-| `pnpm run test` | 단위 테스트 |
-| `pnpm run test:docker` | Qdrant/Mongo/Ollama 연결 테스트 |
-| `pnpm run test:upload-photo` | 사진 업로드 API 테스트 |
-| `pnpm run test:upload-document` | 문서 업로드 API 테스트 (TXT/PDF/DOCX) |
-| `pnpm run clear-timeline` | 타임라인·메모리 삭제 |
-| `pnpm run clear-all` | 전체 데이터 삭제 (brain-data 파일은 유지) |
-| `pnpm run build` | 빌드 |
+
+| 명령                              | 설명                                                                 |
+| ------------------------------- | ------------------------------------------------------------------ |
+| `pnpm run start:dev`            | Nest 개발 서버만 (watch)                                                |
+| `pnpm run start:prod`           | 프로덕션 서버                                                            |
+| `pnpm run start:docker`         | Docker: Qdrant + Mongo up                                          |
+| `pnpm run start:all`            | Docker + Nest + ai + face + UI 동시 실행                               |
+| `pnpm run dev`                  | **개발용** — start:all과 동일 (Docker + Nest + ai + face + UI)           |
+| `pnpm run ingest-photos`        | 사진 스캔 → 얼굴·Vision·메모리                                              |
+| `pnpm run ingest-all`           | 사진 + 문서 통합 스캔                                                      |
+| `pnpm run ingest-all-parallel`  | 병렬 수집                                                              |
+| `pnpm run batch-upload`         | `brain-data/upload` 폴더 파일 → /brain/upload/photo·document (서버 실행 중) |
+| `pnpm run build-face-db`        | 얼굴 DB (faces_src → faces.json)                                     |
+| `pnpm run build-timeline`       | 타임라인 통계                                                            |
+| `pnpm run run-agent`            | 에이전트 예제 (질문 → 검색 → Ollama)                                         |
+| `pnpm run dev:ui`               | 웹 UI ([http://localhost:5173](http://localhost:5173))              |
+| `pnpm run build:ui`             | 웹 UI 프로덕션 빌드                                                       |
+| `pnpm run test`                 | 단위 테스트                                                             |
+| `pnpm run test:docker`          | Qdrant/Mongo/Ollama 연결 테스트                                         |
+| `pnpm run test:upload-photo`    | 사진 업로드 API 테스트                                                     |
+| `pnpm run test:upload-document` | 문서 업로드 API 테스트 (TXT/PDF/DOCX)                                      |
+| `pnpm run clear-timeline`       | 타임라인·메모리 삭제                                                        |
+| `pnpm run clear-all`            | 전체 데이터 삭제 (brain-data 파일은 유지)                                      |
+| `pnpm run build`                | 빌드                                                                 |
+
 
 ---
 
 ## 환경 변수
 
-| 변수 | 기본값 | 설명 |
-|------|--------|------|
-| `PORT` | `3001` | 서버 포트 |
-| `OLLAMA_URL` | `http://localhost:11434` | Ollama API |
-| `QDRANT_URL` | `http://localhost:6333` | Qdrant |
-| `MONGO_URL` | `mongodb://localhost:27017` | MongoDB |
-| `MONGO_DB_NAME` | `custom_brain` | MongoDB DB 이름 |
-| `BRAIN_DATA_PATH` | `./brain-data` | 데이터 루트 |
-| `VISION_MODEL` | `llava` | 사진 설명 모델 |
-| `EMBED_MAX_INPUT_CHARS` | `2000` | 임베딩 입력 최대 문자 (초과 시 1000 등으로 조정) |
-| `FACE_MODEL_PATH` | `./face-models` | face-api 모델 폴더 |
-| `AI_SERVICE_URL` | (없음) | Python ai-service (예: http://localhost:8000). 음성 STT·Vision·v3 등에 사용 |
-| `WHISPER_MODEL` | (ai-service) `base` | Whisper 모델 (base/small/medium/large). ai-service의 `/transcribe`에서 사용 |
-| `FACE_SERVICE_URL` | (없음) | 얼굴 인식 서비스 (예: http://localhost:8001) |
-| `NEO4J_URI` | (없음) | v3 지식 그래프 (예: bolt://localhost:7687) |
-| `S3_BUCKET` | (없음) | 설정 시 업로드를 S3로 (S3_REGION, AWS_ACCESS_KEY_ID 등) |
-| `CORS_ORIGIN` | (없음) | 설정 시 CORS 허용 origin (쉼표 구분). 미설정 시 모든 origin 허용 (개발용) |
-| `SKIP_AUTH` | (없음) | `true` 또는 `1`이면 `/brain/*` 인증 생략. 로컬 개발 시 Timeline 등 401 방지용 |
+
+| 변수                      | 기본값                         | 설명                                                                                            |
+| ----------------------- | --------------------------- | --------------------------------------------------------------------------------------------- |
+| `PORT`                  | `3001`                      | 서버 포트                                                                                         |
+| `OLLAMA_URL`            | `http://localhost:11434`    | Ollama API                                                                                    |
+| `QDRANT_URL`            | `http://localhost:6333`     | Qdrant                                                                                        |
+| `MONGO_URL`             | `mongodb://localhost:27017` | MongoDB                                                                                       |
+| `MONGO_DB_NAME`         | `custom_brain`              | MongoDB DB 이름                                                                                 |
+| `BRAIN_DATA_PATH`       | `./brain-data`              | 데이터 루트                                                                                        |
+| `VISION_MODEL`          | `llava`                     | 사진 설명 모델                                                                                      |
+| `EMBED_MAX_INPUT_CHARS` | `2000`                      | 임베딩 입력 최대 문자 (초과 시 1000 등으로 조정)                                                               |
+| `FACE_MODEL_PATH`       | `./face-models`             | face-api 모델 폴더                                                                                |
+| `AI_SERVICE_URL`        | (없음)                        | Python ai-service (예: [http://localhost:8000](http://localhost:8000)). 음성 STT·Vision·v3 등에 사용 |
+| `WHISPER_MODEL`         | (ai-service) `base`         | Whisper 모델 (base/small/medium/large). ai-service의 `/transcribe`에서 사용                          |
+| `FACE_SERVICE_URL`      | (없음)                        | 얼굴 인식 서비스 (예: [http://localhost:8001](http://localhost:8001))                                 |
+| `NEO4J_URI`             | (없음)                        | v3 지식 그래프 (예: bolt://localhost:7687)                                                          |
+| `S3_BUCKET`             | (없음)                        | 설정 시 업로드를 S3로 (S3_REGION, AWS_ACCESS_KEY_ID 등)                                                |
+| `CORS_ORIGIN`           | (없음)                        | 설정 시 CORS 허용 origin (쉼표 구분). 미설정 시 모든 origin 허용 (개발용)                                         |
+| `SKIP_AUTH`             | (없음)                        | `true` 또는 `1`이면 `/brain/`* 인증 생략. 로컬 개발 시 Timeline 등 401 방지용                                  |
+
 
 `.env` 파일로 덮어쓰기 가능. 예시: `.env.example` 참고.
 
@@ -295,7 +335,7 @@ custom-brain/
 - **E2E**: `pnpm run test:e2e`
 - **연결**: `pnpm run test:docker` (Qdrant, MongoDB, Ollama)
 - **업로드**: `pnpm run test:upload-photo`, `pnpm run test:upload-document` (백엔드 실행 중)
-- **테스트 UI**: 서버 실행 후 http://localhost:3001/test → "Run tests"
+- **테스트 UI**: 서버 실행 후 [http://localhost:3001/test](http://localhost:3001/test) → "Run tests"
 
 **테스터 검증**: 코드 수정이 있으면 변경된 기능에 대해 테스터가 반드시 검증해야 합니다. (관련 규칙: `.cursor/rules/tester-after-change.mdc`)
 
@@ -303,15 +343,17 @@ custom-brain/
 
 ## OpenClaw 연동
 
-1. custom-brain 서버 실행: `pnpm run start:dev` (기본 http://localhost:3001).
+1. custom-brain 서버 실행: `pnpm run start:dev` (기본 [http://localhost:3001](http://localhost:3001)).
 2. `docs/openclaw/custom-brain/` 폴더를 OpenClaw 스킬 디렉터리로 복사.
 3. 다른 호스트/포트면 스킬의 **baseUrl** 을 해당 주소로 수정.
 
-| 항목 | 값 |
-|------|-----|
-| 질의 (RAG + autoMemory) | `POST /brain/ask` → `{ "question": "..." }` → `{ "answer": "..." }` |
-| 채팅 | `POST /brain/chat` → `{ "message": "..." }` → `{ "reply": "...", "memory": { ... } }` |
-| 세션 대화 | `GET /brain/memory` → `{ "messages": [...] }` |
+
+| 항목                    | 값                                                                                     |
+| --------------------- | ------------------------------------------------------------------------------------- |
+| 질의 (RAG + autoMemory) | `POST /brain/ask` → `{ "question": "..." }` → `{ "answer": "..." }`                   |
+| 채팅                    | `POST /brain/chat` → `{ "message": "..." }` → `{ "reply": "...", "memory": { ... } }` |
+| 세션 대화                 | `GET /brain/memory` → `{ "messages": [...] }`                                         |
+
 
 상세: `docs/openclaw/custom-brain/SKILL.md`.
 
@@ -323,11 +365,13 @@ custom-brain/
 
 ### 1. 데이터베이스
 
-| 저장소 | 용도 | 마이그레이션 방법 |
-|--------|------|------------------|
-| **MongoDB** | 메모리 메타·타임라인·가족·인증 사용자 | `mongodump` → 새 서버에서 `mongorestore` |
-| **Qdrant** | 메모리·사진 벡터, (선택) 얼굴 벡터 | 스냅샷 생성 후 새 Qdrant에 복원 또는 API로 컬렉션 이전 |
-| **Neo4j** (선택) | v3 지식 그래프 | Neo4j 백업/복원 (`neo4j-admin dump` 등) |
+
+| 저장소            | 용도                    | 마이그레이션 방법                            |
+| -------------- | --------------------- | ------------------------------------ |
+| **MongoDB**    | 메모리 메타·타임라인·가족·인증 사용자 | `mongodump` → 새 서버에서 `mongorestore`  |
+| **Qdrant**     | 메모리·사진 벡터, (선택) 얼굴 벡터 | 스냅샷 생성 후 새 Qdrant에 복원 또는 API로 컬렉션 이전 |
+| **Neo4j** (선택) | v3 지식 그래프             | Neo4j 백업/복원 (`neo4j-admin dump` 등)   |
+
 
 **MongoDB**
 
@@ -349,7 +393,7 @@ custom-brain/
 
 ### 2. 파일 (문서·사진·음성 등)
 
-로컬 저장 시 모든 미디어는 **`BRAIN_DATA_PATH`** (기본 `./brain-data`) 아래에 있습니다. 이 디렉터리 전체를 새 서버로 복사하면 됩니다.
+로컬 저장 시 모든 미디어는 **BRAIN_DATA_PATH** (기본 `./brain-data`) 아래에 있습니다. 이 디렉터리 전체를 새 서버로 복사하면 됩니다.
 
 **폴더 구조 (복사 대상)**
 
@@ -380,10 +424,23 @@ brain-data/
 ### 3. 마이그레이션 순서 요약
 
 1. **기존 서버**: 서비스 중지 → MongoDB dump, Qdrant 스냅샷(또는 벡터 이전), (사용 시) Neo4j 백업 → `brain-data` 전체 복사.
-2. **새 서버**: MongoDB/Qdrant/Neo4j 설치 및 복원 → `brain-data`를 `BRAIN_DATA_PATH`에 배치 → `.env`에 `MONGO_URL`, `QDRANT_URL`, `MONGO_DB_NAME`, `BRAIN_DATA_PATH`, (선택) `NEO4J_URI`, `S3_*` 등 설정 → 애플리케이션 및 Ollama/ai-service/face-service 실행.
+2. **새 서버**: MongoDB/Qdrant/Neo4j 설치 및 복원 → `brain-data`를 `BRAIN_DATA_PATH`에 배치 → `.env`에 `MONGO_URL`, `QDRANT_URL`, `MONGO_DB_NAME`, `BRAIN_DATA_PATH`, (선택) `NEO4J_URI`, `S3_`* 등 설정 → 애플리케이션 및 Ollama/ai-service/face-service 실행.
 3. **검증**: `GET /health`, 검색·타임라인·업로드 경로 동작 확인.
 
 - 상세 아키텍처·환경 변수: [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md).
+
+---
+
+## 문서 인덱스
+
+| 문서 | 용도 |
+|------|------|
+| **이 README** | 설치·실행·기능·API·스크립트·환경 변수·마이그레이션 (단일 진입점) |
+| [docs/README.md](docs/README.md) | 문서 목록·통합 아키텍처 링크 |
+| [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) | 시스템 구성·파이프라인·프로젝트 구조·env·Docker |
+| [docs/openclaw/custom-brain/SKILL.md](docs/openclaw/custom-brain/SKILL.md) | OpenClaw 스킬·Agent Tools |
+| [deploy/README.md](deploy/README.md) | Ubuntu 배포·설치 스크립트 |
+| [did.md](did.md) | 지금까지 한 작업 이력 (중복 작업 방지용) |
 
 ---
 
